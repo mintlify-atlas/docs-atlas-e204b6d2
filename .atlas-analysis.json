@@ -1,0 +1,143 @@
+{
+  "projectType": "cli-tool",
+  "projectName": "GLAM CLI",
+  "projectDescription": "Command-line interface for managing GLAM Protocol vaults on Solana blockchain.",
+  "theme": "aspen",
+  "primaryColor": "#8B5CF6",
+  "lightColor": "#A78BFA",
+  "darkColor": "#6D28D9",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart",
+              "configuration"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/vaults",
+              "concepts/delegates",
+              "concepts/integrations"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/creating-vaults",
+              "guides/managing-assets",
+              "guides/delegate-permissions",
+              "guides/investor-operations"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Command Reference",
+        "groups": [
+          {
+            "group": "Vault Management",
+            "pages": [
+              "commands/vault",
+              "commands/env",
+              "commands/transfer"
+            ]
+          },
+          {
+            "group": "Trading & Swaps",
+            "pages": [
+              "commands/jupiter"
+            ]
+          },
+          {
+            "group": "DeFi Integrations",
+            "pages": [
+              "commands/drift-protocol",
+              "commands/drift-vaults",
+              "commands/kamino-lend",
+              "commands/kamino-vaults",
+              "commands/kamino-farms",
+              "commands/marinade",
+              "commands/lst",
+              "commands/stake"
+            ]
+          },
+          {
+            "group": "Access Control",
+            "pages": [
+              "commands/delegate",
+              "commands/integration"
+            ]
+          },
+          {
+            "group": "Investor Operations",
+            "pages": [
+              "commands/invest",
+              "commands/manage"
+            ]
+          },
+          {
+            "group": "Advanced",
+            "pages": [
+              "commands/alt",
+              "commands/timelock",
+              "commands/cctp"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Create and manage GLAM Protocol vaults on Solana",
+    "Execute token swaps via Jupiter aggregator",
+    "Integrate with DeFi protocols (Drift, Kamino, Marinade)",
+    "Manage delegate permissions and access control",
+    "Handle investor subscriptions and redemptions",
+    "Configure vault assets and policies",
+    "Support for liquid staking and native staking",
+    "Cross-chain transfers via CCTP"
+  ],
+  "publicApiSurface": [
+    "glam-cli vault list",
+    "glam-cli vault create",
+    "glam-cli vault set",
+    "glam-cli vault view",
+    "glam-cli vault close",
+    "glam-cli vault token-balances",
+    "glam-cli vault allowlist-asset",
+    "glam-cli vault wrap",
+    "glam-cli vault unwrap",
+    "glam-cli transfer",
+    "glam-cli delegate list",
+    "glam-cli delegate grant",
+    "glam-cli delegate revoke",
+    "glam-cli integration list",
+    "glam-cli integration enable",
+    "glam-cli integration disable",
+    "glam-cli jupiter swap",
+    "glam-cli jupiter view-policy",
+    "glam-cli jupiter set-max-slippage",
+    "glam-cli kamino-lend deposit",
+    "glam-cli kamino-lend withdraw",
+    "glam-cli kamino-vaults deposit",
+    "glam-cli kamino-vaults withdraw",
+    "glam-cli drift-protocol deposit",
+    "glam-cli drift-protocol withdraw",
+    "glam-cli drift-vaults deposit",
+    "glam-cli drift-vaults withdraw",
+    "glam-cli invest subscribe",
+    "glam-cli invest redeem",
+    "glam-cli manage settle",
+    "glam-cli alt create",
+    "glam-cli timelock propose",
+    "glam-cli cctp transfer"
+  ]
+}
