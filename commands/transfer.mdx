@@ -1,0 +1,160 @@
+---
+title: 'Transfer Commands'
+description: 'Transfer vault assets to external addresses'
+---
+
+## transfer
+
+Transfer SPL tokens from the vault to a destination address. Defaults to wSOL if no token is specified.
+
+```bash
+glam-cli transfer <amount> <to> [options]
+```
+
+### Arguments
+
+<ParamField path="amount" type="number" required>
+  Amount to transfer in token units (not lamports).
+</ParamField>
+
+<ParamField path="to" type="string" required>
+  Destination address (public key) to receive the tokens.
+</ParamField>
+
+### Options
+
+<ParamField path="-t, --token" type="string" default="wSOL">
+  Mint address of SPL token to transfer. Defaults to wSOL (So11111111111111111111111111111111111111112).
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Transfer 10 wSOL to destination
+glam-cli transfer 10 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333
+
+# Transfer 1000 USDC
+glam-cli transfer 1000 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333 --token EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Transfer without confirmation
+glam-cli transfer 5.5 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333 --yes
+```
+
+### Example Output
+
+```
+Transferred 10 wSOL to 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333: tx_signature_here
+```
+
+---
+
+## transfer view-policy
+
+View the token transfer policy, including the allowlist of destination addresses.
+
+```bash
+glam-cli transfer view-policy
+```
+
+### Examples
+
+```bash
+glam-cli transfer view-policy
+```
+
+### Example Output
+
+```
+Token transfer allowlist:
+[0] 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333
+[1] 7kL2mNpQrAbCdEfGhIjKlMnOpQrStUvWxYz444555666
+[2] 3fG8hJkLmAbCdEfGhIjKlMnOpQrStUvWxYz777888999
+```
+
+---
+
+## transfer allowlist-destination
+
+Add a destination address to the token transfer allowlist.
+
+```bash
+glam-cli transfer allowlist-destination <pubkey> [options]
+```
+
+### Arguments
+
+<ParamField path="pubkey" type="string" required>
+  Public key of the destination address to add to the allowlist.
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Add destination to allowlist
+glam-cli transfer allowlist-destination 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333
+
+# Add without confirmation
+glam-cli transfer allowlist-destination 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333 --yes
+```
+
+### Example Output
+
+```
+Added destination 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333 to allowlist: tx_signature_here
+```
+
+---
+
+## transfer remove-destination
+
+Remove a destination address from the token transfer allowlist.
+
+```bash
+glam-cli transfer remove-destination <pubkey> [options]
+```
+
+### Arguments
+
+<ParamField path="pubkey" type="string" required>
+  Public key of the destination address to remove from the allowlist.
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Remove destination from allowlist
+glam-cli transfer remove-destination 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333
+
+# Remove without confirmation
+glam-cli transfer remove-destination 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333 --yes
+```
+
+### Example Output
+
+```
+Removed destination 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333 from allowlist: tx_signature_here
+```
+
+### Transfer Policy Notes
+
+**Allowlist Requirement**: Before transferring tokens to a destination address, that address must be added to the transfer allowlist using `transfer allowlist-destination`.
+
+**Security**: The transfer policy provides an additional security layer by restricting where vault assets can be sent.
+
+**Policy Not Found**: If no transfer policy exists when attempting to allowlist a destination, a new policy will be created automatically.

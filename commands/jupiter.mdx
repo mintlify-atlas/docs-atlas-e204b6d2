@@ -1,0 +1,177 @@
+---
+title: Jupiter Commands
+description: Execute token swaps and manage swap policies on Jupiter DEX
+---
+
+## swap
+
+Swap assets held in the vault using Jupiter DEX.
+
+```bash
+glam jupiter swap <from> <to> <amount> [options]
+```
+
+<ParamField path="from" type="string" required>
+  Source token mint address or symbol
+</ParamField>
+
+<ParamField path="to" type="string" required>
+  Destination token mint address or symbol
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Decimal-adjusted UI amount to swap
+</ParamField>
+
+<ParamField path="-m, --max-accounts" type="number">
+  Specify max accounts allowed in the transaction
+</ParamField>
+
+<ParamField path="-s, --slippage-bps" type="number" default="5">
+  Slippage in basis points (default: 5 = 0.05%)
+</ParamField>
+
+<ParamField path="--use-v1" type="boolean" default="false">
+  Use v1 instruction (default: v2)
+</ParamField>
+
+<ParamField path="-d, --only-direct-routes" type="boolean">
+  Use only direct routes for the swap
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Swap 100 USDC to SOL with default slippage
+glam jupiter swap USDC SOL 100
+
+# Swap with custom slippage
+glam jupiter swap USDC SOL 100 -s 10
+
+# Swap using direct routes only
+glam jupiter swap USDC SOL 100 -d
+
+# Skip confirmation
+glam jupiter swap USDC SOL 100 -y
+```
+
+## view-policy
+
+View the current Jupiter swap policy including max slippage and token allowlist.
+
+```bash
+glam jupiter view-policy
+```
+
+**Example output:**
+
+```
+Max slippage BPS: 50
+Swap allowlist:
+[0] EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+[1] So11111111111111111111111111111111111111112
+```
+
+## set-max-slippage
+
+Set the maximum allowed slippage for swaps in basis points.
+
+```bash
+glam jupiter set-max-slippage <slippage_bps> [options]
+```
+
+<ParamField path="slippage_bps" type="number" required>
+  Maximum slippage in basis points (e.g., 50 = 0.5%)
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Set max slippage to 0.5%
+glam jupiter set-max-slippage 50
+
+# Set max slippage to 1%
+glam jupiter set-max-slippage 100 -y
+```
+
+## allowlist-token
+
+Add a token to the swap allowlist.
+
+```bash
+glam jupiter allowlist-token <token> [options]
+```
+
+<ParamField path="token" type="string" required>
+  Token mint public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Add USDC to allowlist
+glam jupiter allowlist-token EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Add token without confirmation
+glam jupiter allowlist-token EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v -y
+```
+
+## remove-token
+
+Remove a token from the swap allowlist.
+
+```bash
+glam jupiter remove-token <token> [options]
+```
+
+<ParamField path="token" type="string" required>
+  Token mint public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Remove token from allowlist
+glam jupiter remove-token EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Remove without confirmation
+glam jupiter remove-token EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v -y
+```
+
+## clear-allowlist
+
+Clear the swap allowlist to allow all tokens.
+
+```bash
+glam jupiter clear-allowlist [options]
+```
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Clear allowlist
+glam jupiter clear-allowlist
+
+# Clear without confirmation
+glam jupiter clear-allowlist -y
+```

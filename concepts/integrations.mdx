@@ -1,0 +1,671 @@
+---
+title: 'Protocol Integrations'
+description: 'Explore GLAM protocol integrations, supported protocols, and integration management'
+---
+
+## Overview
+
+GLAM vaults interact with external DeFi protocols through a secure integration system. Each integration must be explicitly enabled and can be configured with protocol-specific policies.
+
+## Integration Architecture
+
+GLAM uses a modular integration system:
+
+```
+Vault State
+  └── Integration ACL
+        ├── Integration Program ID
+        └── Protocols Bitmask
+              └── Protocol Policies
+```
+
+### Integration Programs
+
+Integration programs are GLAM-developed adapters that provide safe access to external protocols:
+
+- **Protocol Program**: Core DeFi integrations (swaps, staking, transfers)
+- **Ext Drift Program**: Drift Protocol derivatives and spot trading
+- **Ext Kamino Program**: Kamino lending, vaults, and farms
+
+<Info>
+Integration programs cannot be added by users. They are developed and audited by the GLAM team to ensure security and correctness.
+</Info>
+
+### Protocol Bitflags
+
+Each integration program supports multiple protocols, represented as bitflags:
+
+**Protocol Program:**
+- `0b0000001` (1) - **SplToken**: SPL token operations
+- `0b0000010` (2) - **Transfer**: Cross-program transfers
+- `0b0000100` (4) - **JupiterSwap**: Token swaps via Jupiter aggregator
+- `0b0001000` (8) - **Stake**: Native SOL staking
+- `0b0010000` (16) - **Marinade**: Marinade Finance liquid staking
+- `0b0100000` (32) - **LST**: Generic liquid staking token support
+
+**Ext Drift Program:**
+- `0b01` (1) - **DriftProtocol**: Spot and perpetual trading
+
+**Ext Kamino Program:**
+- `0b01` (1) - **KaminoLend**: Lending and borrowing
+- `0b10` (2) - **KaminoVaults**: Automated liquidity vaults
+- `0b100` (4) - **KaminoFarms**: Liquidity mining farms
+
+<Note>
+Bitflags can be combined using bitwise OR. For example, enabling both JupiterSwap (0b0000100) and Stake (0b0001000) results in 0b0001100 (12).
+</Note>
+
+## Available Protocols
+
+### SPL Token
+
+**Protocol**: `SplToken`  
+**Integration**: Protocol Program  
+**Bitflag**: `0b0000001`
+
+**Capabilities:**
+- Burn tokens from vault
+- Mint tokens to vault  
+- Transfer tokens between accounts
+
+**Permissions:**
+- `Burn`
+- `Mint`
+- `Transfer`
+
+**Use cases**: Token management, share token operations
+
+### Jupiter Swap
+
+**Protocol**: `JupiterSwap`  
+**Integration**: Protocol Program  
+**Bitflag**: `0b0000100`
+
+**Capabilities:**
+- Swap tokens using Jupiter aggregator
+- Access best prices across Solana DEXes
+- Configure slippage limits and token allowlists
+
+**Permissions:**
+- `Swap`
+
+**Policy Configuration:**
+
+From jupiter.ts:33-84, Jupiter supports custom policies:
+
+```typescript
+type JupiterSwapPolicy = {
+  maxSlippageBps: number,
+  swapAllowlist: PublicKey[] | null
+}
+```
+
+**Commands:**
+```bash
+# Set max slippage (in basis points)
+glam jupiter set-max-slippage 50  # 0.5%
+
+# Allowlist specific tokens for swapping
+glam jupiter allowlist-token <mint-pubkey>
+
+# Remove token from allowlist
+glam jupiter remove-token <mint-pubkey>
+
+# View current policy
+glam jupiter view-policy
+```
+
+<Warning>
+Without a swap allowlist, the vault can swap to any token on Jupiter. Use allowlists to restrict trading to approved assets only.
+</Warning>
+
+### Drift Protocol
+
+**Protocol**: `DriftProtocol`  
+**Integration**: Ext Drift Program  
+**Bitflag**: `0b01`
+
+**Capabilities:**
+- Trade spot markets
+- Trade perpetual futures
+- Manage collateral deposits
+- Place, modify, and cancel orders
+
+**Permissions:**
+- `Initialize` - Initialize Drift accounts
+- `Deposit` - Deposit collateral
+- `Withdraw` - Withdraw collateral
+- `PlaceOrder` - Place spot/perp orders
+- `CancelOrder` - Cancel existing orders
+- `ModifyOrder` - Modify order parameters
+
+**Policy Configuration:**
+
+From drift-protocol.ts:27-34, Drift supports market allowlists:
+
+```typescript
+type DriftProtocolPolicy = {
+  spotMarketsAllowlist: number[],
+  perpMarketsAllowlist: number[],
+  subAccountsAllowlist: number[]
+}
+```
+
+**Commands:**
+```bash
+# Allowlist a spot market
+glam drift-protocol allowlist-market spot <market-index>
+
+# Allowlist a perp market  
+glam drift-protocol allowlist-market perp <market-index>
+
+# Remove market from allowlist
+glam drift-protocol remove-market spot <market-index>
+
+# View current policy
+glam drift-protocol view-policy
+```
+
+### Kamino Lend
+
+**Protocol**: `KaminoLend`  
+**Integration**: Ext Kamino Program  
+**Bitflag**: `0b01`
+
+**Capabilities:**
+- Deposit assets to lending markets
+- Withdraw deposited assets
+- Borrow against collateral
+- Repay borrowed assets
+
+**Permissions:**
+- `Deposit`
+- `Withdraw`
+- `Borrow`
+- `Repay`
+
+**Policy Configuration:**
+
+From kamino-lend.ts:23-40, Kamino Lend supports market and asset allowlists:
+
+```typescript
+type KaminoLendingPolicy = {
+  marketsAllowlist: PublicKey[],
+  borrowAllowlist: PublicKey[]
+}
+```
+
+**Commands:**
+```bash
+# Allowlist a lending market
+glam kamino-lend allowlist-market <market-pubkey>
+
+# Allowlist a borrowable asset
+glam kamino-lend allowlist-borrow-asset <asset-pubkey>
+
+# View current policy
+glam kamino-lend view-policy
+```
+
+### Kamino Vaults
+
+**Protocol**: `KaminoVaults`  
+**Integration**: Ext Kamino Program  
+**Bitflag**: `0b10`
+
+**Capabilities:**
+- Deposit to automated liquidity vaults
+- Withdraw from vaults
+- Earn automated yield from concentrated liquidity
+
+**Commands:**
+```bash
+# Deposit to Kamino vault
+glam kamino-vaults deposit <vault-pubkey> <amount>
+
+# Withdraw from vault
+glam kamino-vaults withdraw <vault-pubkey> <shares>
+```
+
+### Kamino Farms
+
+**Protocol**: `KaminoFarms`  
+**Integration**: Ext Kamino Program  
+**Bitflag**: `0b100`
+
+**Capabilities:**
+- Stake LP tokens in liquidity mining farms
+- Claim farming rewards
+- Unstake LP tokens
+
+**Commands:**
+```bash
+# Stake in farm
+glam kamino-farms stake <farm-pubkey> <amount>
+
+# Harvest rewards
+glam kamino-farms harvest <farm-pubkey>
+
+# Unstake from farm
+glam kamino-farms unstake <farm-pubkey> <amount>
+```
+
+### Native Staking
+
+**Protocol**: `Stake`  
+**Integration**: Protocol Program  
+**Bitflag**: `0b0001000`
+
+**Capabilities:**
+- Stake SOL to validators
+- Delegate to stake pools
+- Unstake and withdraw
+
+**Commands:**
+```bash
+# Stake SOL
+glam stake create <validator-pubkey> <amount>
+
+# Deactivate stake
+glam stake deactivate <stake-account>
+
+# Withdraw unstaked SOL  
+glam stake withdraw <stake-account>
+```
+
+### Marinade Finance
+
+**Protocol**: `Marinade`  
+**Integration**: Protocol Program  
+**Bitflag**: `0b0010000`
+
+**Capabilities:**
+- Liquid stake SOL for mSOL
+- Unstake mSOL for SOL
+- Earn staking yields while maintaining liquidity
+
+**Commands:**
+```bash
+# Stake SOL for mSOL
+glam marinade stake <amount>
+
+# Unstake mSOL for SOL (delayed)
+glam marinade unstake <amount>
+
+# Instant unstake (may have fees)
+glam marinade instant-unstake <amount>
+```
+
+## Managing Integrations
+
+### Listing Integrations
+
+View all enabled integrations for the active vault:
+
+```bash
+glam integration list
+```
+
+Output format (from integration.ts:50-77):
+```
+Vault Name (State PDA) has 3 integration programs enabled:
+[0] <Protocol-Program-ID>, protocols (0b0001100): JupiterSwap, Stake
+[1] <Ext-Drift-Program-ID>, protocols (0b01): DriftProtocol  
+[2] <Ext-Kamino-Program-ID>, protocols (0b11): KaminoLend, KaminoVaults
+```
+
+The protocols bitmask shows which specific protocols are enabled within each integration program.
+
+### Enabling Protocols
+
+Enable one or more protocols by name:
+
+```bash
+glam integration enable <protocol1> <protocol2> ...
+```
+
+**Examples:**
+
+```bash
+# Enable single protocol
+glam integration enable JupiterSwap
+
+# Enable multiple protocols
+glam integration enable JupiterSwap Stake Marinade
+
+# Enable Drift trading
+glam integration enable DriftProtocol
+
+# Enable all Kamino protocols  
+glam integration enable KaminoLend KaminoVaults KaminoFarms
+```
+
+From integration.ts:79-116, the enable process:
+1. Groups protocols by integration program
+2. Computes combined bitflag for each program
+3. Submits transaction to enable protocols
+4. Updates integration ACLs on-chain
+
+<Accordion title="Protocol Grouping">
+When enabling multiple protocols, the CLI automatically groups them by integration program:
+
+```bash
+glam integration enable JupiterSwap DriftProtocol KaminoLend
+```
+
+This creates three transactions:
+1. Enable JupiterSwap (0b0000100) on Protocol Program
+2. Enable DriftProtocol (0b01) on Ext Drift Program  
+3. Enable KaminoLend (0b01) on Ext Kamino Program
+
+Protocols from the same integration program are combined into a single transaction.
+</Accordion>
+
+### Disabling Protocols
+
+Disable specific protocols:
+
+```bash
+glam integration disable <protocol1> <protocol2> ...
+```
+
+**Examples:**
+
+```bash
+# Disable swap access
+glam integration disable JupiterSwap
+
+# Disable multiple protocols
+glam integration disable Stake Marinade
+
+# Disable Drift trading
+glam integration disable DriftProtocol
+```
+
+From integration.ts:118-155, disable follows the same grouping logic as enable.
+
+### Disabling All Protocols from Integration
+
+Completely disable an integration program:
+
+```bash
+glam integration disable-all <integration-program-id>
+```
+
+**Example:**
+
+```bash
+# Disable all Kamino protocols
+glam integration disable-all <ext-kamino-program-id>
+```
+
+From integration.ts:157-181, this:
+- Removes all protocols from the integration program
+- Uses `emergencyAccessUpdate` for immediate effect
+- Prevents all operations through that integration
+- Blocks delegate access to those protocols
+
+<Warning>
+Disabling an integration immediately blocks all vault operations using that integration, including delegate operations. Active positions in protocols should be closed before disabling.
+</Warning>
+
+## Integration Validation
+
+For any vault operation through an integration, GLAM validates:
+
+1. **Integration enabled**: Integration program is in vault's integration ACL
+2. **Protocol enabled**: Protocol bitflag is set in integration's protocols bitmask
+3. **Policy compliance**: Operation complies with protocol policy (if configured)
+4. **Permission granted**: Signer has required permissions (owner or delegate)
+
+All four conditions must be satisfied for the operation to execute.
+
+## Protocol Policies
+
+Some protocols support additional policy configurations:
+
+### Policy Purpose
+
+Policies add an extra layer of risk control:
+- **Slippage limits**: Prevent excessive losses from price impact
+- **Asset allowlists**: Restrict trading to approved tokens
+- **Market allowlists**: Limit exposure to specific markets
+- **Borrowing limits**: Control which assets can be borrowed
+
+### Policy Structure
+
+Policies are stored on-chain in the vault state account:
+
+```typescript
+type ProtocolPolicy = {
+  integrationProgram: PublicKey,
+  protocolBitflag: number,
+  policyData: Buffer  // Protocol-specific encoded data
+}
+```
+
+### Setting Policies
+
+Each protocol has specific commands for policy management:
+
+**Jupiter:**
+```bash
+glam jupiter set-max-slippage <bps>
+glam jupiter allowlist-token <mint>
+```
+
+**Drift:**
+```bash
+glam drift-protocol allowlist-market <type> <index>
+```
+
+**Kamino Lend:**
+```bash
+glam kamino-lend allowlist-market <pubkey>
+glam kamino-lend allowlist-borrow-asset <pubkey>
+```
+
+<Note>
+Policies are optional. If no policy is set, the protocol uses default behavior (e.g., Jupiter allows all tokens, Drift allows all markets).
+</Note>
+
+## Integration vs Delegate Permissions
+
+Integrations and delegates work together to control vault access:
+
+| Aspect | Integration ACL | Delegate ACL |
+|--------|----------------|---------------|
+| Controls | Which protocols are available | Who can use protocols |
+| Managed by | Vault owner | Vault owner |
+| Scope | Vault-wide | Per-delegate |
+| Granularity | Per-protocol | Per-permission |
+
+**Example workflow:**
+
+```bash
+# 1. Owner enables Jupiter protocol
+glam integration enable JupiterSwap
+
+# 2. Owner sets swap policy
+glam jupiter set-max-slippage 50
+
+# 3. Owner grants delegate swap permission
+glam delegate grant <bot-pubkey> --protocol JupiterSwap Swap
+
+# 4. Delegate can now swap (within policy limits)
+# Bot executes: glam jupiter swap ...
+```
+
+Without step 1, the delegate cannot swap (integration disabled).  
+Without step 3, the delegate cannot swap (permission not granted).  
+Step 2 is optional but recommended for risk management.
+
+<Info>
+Best practice: Enable integrations minimally, set restrictive policies, and grant delegate permissions sparingly.
+</Info>
+
+## Use Cases
+
+### Conservative Yield Strategy
+
+```bash
+# Enable only lending and staking
+glam integration enable KaminoLend Stake
+
+# Restrict to specific lending markets  
+glam kamino-lend allowlist-market <usdc-market>
+glam kamino-lend allowlist-market <sol-market>
+
+# No swaps, no derivatives, no borrowing
+```
+
+### Aggressive Trading Strategy
+
+```bash
+# Enable swaps and derivatives
+glam integration enable JupiterSwap DriftProtocol
+
+# Set swap slippage limit
+glam jupiter set-max-slippage 100  # 1%
+
+# Allow all Drift markets (no policy)
+```
+
+### Multi-Protocol Portfolio
+
+```bash
+# Enable diverse protocols
+glam integration enable \
+  JupiterSwap \
+  DriftProtocol \
+  KaminoLend \
+  KaminoVaults \
+  Marinade
+
+# Configure policies per protocol
+glam jupiter set-max-slippage 50
+glam drift-protocol allowlist-market perp 0  # SOL-PERP
+glam kamino-lend allowlist-market <main-market>
+```
+
+## Best Practices
+
+### Enable Minimally
+
+Only enable protocols you actively use:
+
+```bash
+# ❌ Don't enable everything
+glam integration enable JupiterSwap DriftProtocol KaminoLend \
+  KaminoVaults KaminoFarms Stake Marinade LST
+
+# ✅ Enable what you need  
+glam integration enable JupiterSwap KaminoLend
+```
+
+### Configure Policies
+
+Use protocol policies to limit risk:
+
+```bash
+# Always set slippage limits for swaps
+glam jupiter set-max-slippage 50
+
+# Allowlist only blue-chip tokens
+glam jupiter allowlist-token <usdc-mint>
+glam jupiter allowlist-token <sol-mint>
+glam jupiter allowlist-token <btc-mint>
+```
+
+### Regular Audits
+
+Periodically review enabled integrations:
+
+```bash
+# Review integrations
+glam integration list
+
+# Disable unused protocols
+glam integration disable <unused-protocol>
+```
+
+### Emergency Disabling
+
+Quickly disable protocols during incidents:
+
+```bash
+# Disable specific protocol
+glam integration disable DriftProtocol
+
+# Or disable entire integration
+glam integration disable-all <ext-drift-program-id>
+```
+
+### Test Before Production
+
+Test integrations on devnet before enabling on mainnet:
+
+```bash
+# On devnet
+glam integration enable JupiterSwap
+glam jupiter swap ...  # Test swap
+
+# Verify behavior, then enable on mainnet
+```
+
+## Technical Details
+
+### Integration ACL Storage
+
+From integration.ts:61-76, integration ACLs are stored as:
+
+```typescript
+type IntegrationAcl = {
+  integrationProgram: PublicKey,
+  protocolsBitmask: number
+}
+```
+
+Vault state maintains an array of integration ACLs, one per enabled integration program.
+
+### Bitflag Operations
+
+From integration.ts:25-44, protocol resolution:
+
+1. Map protocol name to integration program and bitflag
+2. Group protocols by integration program
+3. Combine bitflags using OR: `bitmask |= protocolBitflag`
+4. Submit combined bitmask to enable/disable protocols
+
+### Cross-Program Invocations (CPI)
+
+Integration programs use Solana's CPI mechanism to interact with external protocols:
+
+```rust
+// GLAM integration program
+pub fn jupiter_swap(ctx: Context<JupiterSwap>, params: SwapParams) -> Result<()> {
+    // Validate vault permissions
+    require!(ctx.accounts.vault.has_protocol(JUPITER_BITFLAG));
+    
+    // CPI to Jupiter program
+    jupiter::cpi::swap(
+        CpiContext::new(
+            ctx.accounts.jupiter_program.to_account_info(),
+            jupiter::cpi::accounts::Swap { /* ... */ }
+        ),
+        params
+    )?;
+    
+    Ok(())
+}
+```
+
+This ensures:
+- Vault always maintains custody of assets
+- External protocols cannot directly access vault
+- GLAM validates all operations before CPI
+- Failed operations don't compromise vault state
+
+<Info>
+All GLAM integrations are open-source and audited. Review the integration programs at [github.com/glamsystems](https://github.com/glamsystems) before enabling.
+</Info>

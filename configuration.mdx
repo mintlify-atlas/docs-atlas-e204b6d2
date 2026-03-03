@@ -1,0 +1,334 @@
+---
+title: Configuration
+description: Learn how to configure GLAM CLI with RPC endpoints, priority fees, and advanced settings.
+---
+
+GLAM CLI uses a configuration file to manage your environment settings. By default, this file is located at `~/.config/glam/config.json`.
+
+## Configuration File Location
+
+The CLI looks for the configuration file in the following locations:
+
+- **Default**: `~/.config/glam/config.json`
+- **Docker**: `/workspace/config.json` (when `DOCKER` environment variable is set)
+- **Custom**: Specify with the `-C, --config <path>` flag
+
+<Note>
+  You can override the default config location using the `--config` flag:
+  ```bash
+  glam-cli --config /path/to/config.json vault list
+  ```
+</Note>
+
+## Configuration Options
+
+Here's the complete configuration structure with all available options:
+
+```json config.json
+{
+  "cluster": "mainnet-beta",
+  "json_rpc_url": "https://api.mainnet-beta.solana.com",
+  "tx_rpc_url": "https://tx-rpc.mainnet-beta.solana.com",
+  "websocket_disabled": false,
+  "keypair_path": "/path/to/your/keypair.json",
+  "glam_staging": false,
+  "priority_fee": {
+    "micro_lamports": 10000,
+    "level": "high",
+    "helius_api_key": "your-helius-api-key"
+  },
+  "glam_state": "YourActiveVaultStatePubkey",
+  "jupiter_api_key": "your-jupiter-api-key"
+}
+```
+
+## Core Settings
+
+### cluster
+
+<ParamField path="cluster" type="string" required>
+  The Solana cluster to connect to.
+  
+  **Options**: `mainnet-beta`, `devnet`, `testnet`, `localnet`
+  
+  **Default**: `mainnet-beta`
+  
+  ```json
+  "cluster": "mainnet-beta"
+  ```
+</ParamField>
+
+### json_rpc_url
+
+<ParamField path="json_rpc_url" type="string" required>
+  The primary RPC endpoint URL for reading blockchain data.
+  
+  **Examples**:
+  - Public: `https://api.mainnet-beta.solana.com`
+  - Helius: `https://mainnet.helius-rpc.com/?api-key=<your-key>`
+  - QuickNode: `https://your-endpoint.solana-mainnet.quiknode.pro/<your-key>`
+  
+  ```json
+  "json_rpc_url": "https://api.mainnet-beta.solana.com"
+  ```
+  
+  <Warning>
+    Using public RPC endpoints may result in rate limiting. For production use, consider using a dedicated RPC provider like Helius or QuickNode.
+  </Warning>
+</ParamField>
+
+### keypair_path
+
+<ParamField path="keypair_path" type="string" required>
+  Absolute path to your Solana wallet keypair JSON file.
+  
+  ```json
+  "keypair_path": "/home/user/.config/solana/id.json"
+  ```
+  
+  <Info>
+    This wallet will be used to sign all transactions and must have sufficient SOL for transaction fees.
+  </Info>
+</ParamField>
+
+## Optional Settings
+
+### tx_rpc_url
+
+<ParamField path="tx_rpc_url" type="string">
+  A separate RPC endpoint specifically for sending transactions. Useful if you want to use a different endpoint optimized for transaction submission.
+  
+  ```json
+  "tx_rpc_url": "https://tx-rpc.mainnet-beta.solana.com"
+  ```
+  
+  If not specified, `json_rpc_url` will be used for both reading and writing.
+</ParamField>
+
+### websocket_disabled
+
+<ParamField path="websocket_disabled" type="boolean">
+  Disable WebSocket connections for transaction confirmation.
+  
+  **Default**: `false`
+  
+  ```json
+  "websocket_disabled": true
+  ```
+  
+  Set to `true` if your RPC provider doesn't support WebSockets or if you're behind a firewall that blocks WebSocket connections.
+</ParamField>
+
+### glam_staging
+
+<ParamField path="glam_staging" type="boolean">
+  Enable staging/development mode to use the GLAM staging program instead of production.
+  
+  **Default**: `false`
+  
+  ```json
+  "glam_staging": true
+  ```
+  
+  <Warning>
+    Only enable this for testing purposes. Staging vaults are separate from production vaults.
+  </Warning>
+</ParamField>
+
+### glam_state
+
+<ParamField path="glam_state" type="string">
+  The public key of your active GLAM vault state account. This vault will be used by default for all commands.
+  
+  ```json
+  "glam_state": "8xKzG7..."
+  ```
+  
+  <Info>
+    This is automatically set when you create a vault or use `glam-cli vault set <state-pubkey>`. You rarely need to set this manually.
+  </Info>
+</ParamField>
+
+## Priority Fee Configuration
+
+The `priority_fee` object controls how priority fees are calculated for transactions:
+
+### micro_lamports
+
+<ParamField path="priority_fee.micro_lamports" type="number">
+  Fixed priority fee in micro-lamports (1 lamport = 1,000,000 micro-lamports).
+  
+  ```json
+  "priority_fee": {
+    "micro_lamports": 10000
+  }
+  ```
+  
+  **Examples**:
+  - `1000` = 0.001 lamports = very low priority
+  - `10000` = 0.01 lamports = low priority  
+  - `100000` = 0.1 lamports = medium priority
+  - `1000000` = 1 lamport = high priority
+  
+  If set, this takes precedence over dynamic fee estimation.
+</ParamField>
+
+### level
+
+<ParamField path="priority_fee.level" type="string">
+  Priority level for dynamic fee estimation when using Helius.
+  
+  **Options**: `min`, `low`, `medium`, `high`, `veryHigh`, `unsafeMax`
+  
+  **Default**: `medium`
+  
+  ```json
+  "priority_fee": {
+    "level": "high",
+    "helius_api_key": "your-api-key"
+  }
+  ```
+  
+  Only used if `micro_lamports` is not specified and `helius_api_key` is provided.
+</ParamField>
+
+### helius_api_key
+
+<ParamField path="priority_fee.helius_api_key" type="string">
+  Your Helius API key for dynamic priority fee estimation.
+  
+  ```json
+  "priority_fee": {
+    "helius_api_key": "your-helius-api-key",
+    "level": "high"
+  }
+  ```
+  
+  When provided, the CLI will automatically estimate optimal priority fees based on current network conditions.
+  
+  <Tip>
+    Get a free Helius API key at [helius.dev](https://www.helius.dev/)
+  </Tip>
+</ParamField>
+
+## API Keys
+
+### jupiter_api_key
+
+<ParamField path="jupiter_api_key" type="string">
+  Your Jupiter API key for enhanced swap routing and rate limits.
+  
+  ```json
+  "jupiter_api_key": "your-jupiter-api-key"
+  ```
+  
+  While Jupiter works without an API key, having one provides:
+  - Higher rate limits
+  - Better route optimization
+  - Priority access to new features
+  
+  <Info>
+    Request a Jupiter API key at [station.jup.ag](https://station.jup.ag/)
+  </Info>
+</ParamField>
+
+## Example Configurations
+
+### Minimal Configuration (Devnet)
+
+```json
+{
+  "cluster": "devnet",
+  "json_rpc_url": "https://api.devnet.solana.com",
+  "keypair_path": "~/.config/solana/devnet.json"
+}
+```
+
+### Production Configuration (Mainnet)
+
+```json
+{
+  "cluster": "mainnet-beta",
+  "json_rpc_url": "https://mainnet.helius-rpc.com/?api-key=YOUR_KEY",
+  "keypair_path": "/home/user/.config/solana/mainnet.json",
+  "priority_fee": {
+    "helius_api_key": "YOUR_HELIUS_KEY",
+    "level": "high"
+  },
+  "jupiter_api_key": "YOUR_JUPITER_KEY"
+}
+```
+
+### Docker Configuration
+
+```json
+{
+  "cluster": "mainnet-beta",
+  "json_rpc_url": "https://api.mainnet-beta.solana.com",
+  "keypair_path": "/workspace/keypair.json",
+  "websocket_disabled": true,
+  "priority_fee": {
+    "micro_lamports": 100000
+  }
+}
+```
+
+## Verify Configuration
+
+After setting up your configuration, verify it's working correctly:
+
+```bash
+glam-cli env
+```
+
+This displays all current settings:
+
+```
+GLAM Protocol program: GLAMpLuXu78TA4ao3FGZPr86CC7SjH8CPN7rJxSUVZe
+Staging: false
+Wallet connected: YourWalletPubkey...
+RPC endpoint: https://mainnet.helius-rpc.com/?api-key=***
+Priority fee: { helius_api_key: '***', level: 'high' }
+Jupiter API key: configured
+No active GLAM vault configured.
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Missing required field errors">
+    Ensure your config file includes all required fields:
+    - `cluster`
+    - `json_rpc_url`
+    - `keypair_path`
+    
+    Check the error message for which specific field is missing.
+  </Accordion>
+  
+  <Accordion title="Keypair file not found">
+    Verify the path in `keypair_path` is correct and the file exists:
+    
+    ```bash
+    ls -la /path/to/your/keypair.json
+    ```
+    
+    Use absolute paths rather than relative paths or `~` expansion.
+  </Accordion>
+  
+  <Accordion title="RPC connection failures">
+    If you're experiencing connection issues:
+    
+    1. Verify the RPC URL is correct and accessible
+    2. Check if your RPC provider is experiencing downtime
+    3. Try setting `websocket_disabled: true` if WebSocket connections fail
+    4. Consider switching to a different RPC provider
+  </Accordion>
+  
+  <Accordion title="Transaction failures due to priority fees">
+    If transactions are failing or timing out:
+    
+    1. Increase `micro_lamports` value (try 100000 or higher)
+    2. Use Helius dynamic fee estimation with `"level": "high"` or `"veryHigh"`
+    3. Check network congestion at [solanabeach.io](https://solanabeach.io)
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,676 @@
+---
+title: 'Vault Commands'
+description: 'Create, manage, and interact with GLAM vaults'
+---
+
+## vault list
+
+List GLAM vaults based on ownership and type filters.
+
+```bash
+glam-cli vault list [options]
+```
+
+### Options
+
+<ParamField path="-o, --owner-only" type="boolean" default="false">
+  Only show vaults owned by the connected wallet. Cannot be used with `--all`.
+</ParamField>
+
+<ParamField path="-a, --all" type="boolean" default="false">
+  Show all GLAM vaults. Cannot be used with `--owner-only`.
+</ParamField>
+
+<ParamField path="-t, --type" type="string">
+  Filter by type: vault, tokenizedVault, or singleAssetVault (case-insensitive).
+</ParamField>
+
+<ParamField path="-j, --json" type="boolean" default="false">
+  Output in JSON format.
+</ParamField>
+
+### Examples
+
+```bash
+# List vaults owned or delegated to connected wallet
+glam-cli vault list
+
+# List only vaults owned by connected wallet
+glam-cli vault list --owner-only
+
+# List all GLAM vaults
+glam-cli vault list --all
+
+# Filter by vault type
+glam-cli vault list --type tokenizedVault
+
+# Output as JSON
+glam-cli vault list --json
+```
+
+### Example Output
+
+```
+Type            Vault State                                      Vault PDA                                            Launch Date  Name
+tokenizedVault  8x7Y...9kLm                                       5hN2...3pQr                                         2026-02-15   My Fund
+vault           2aB3...4cDe                                       9fG6...7hJk                                         2026-01-10   Trading Vault
+```
+
+---
+
+## vault set
+
+Set the active GLAM vault for subsequent CLI operations.
+
+```bash
+glam-cli vault set <state>
+```
+
+### Arguments
+
+<ParamField path="state" type="string" required>
+  GLAM state public key.
+</ParamField>
+
+### Examples
+
+```bash
+glam-cli vault set 8x7Y9kLmAbCdEfGhIjKlMnOpQrStUvWxYz123456789
+```
+
+### Example Output
+
+```
+Active GLAM state: 8x7Y9kLmAbCdEfGhIjKlMnOpQrStUvWxYz123456789
+Vault: 5hN23pQrAbCdEfGhIjKlMnOpQrStUvWxYz987654321
+```
+
+---
+
+## vault view
+
+View a GLAM product by its state public key.
+
+```bash
+glam-cli vault view [state] [options]
+```
+
+### Arguments
+
+<ParamField path="state" type="string">
+  GLAM state public key. If not provided, uses the active vault from config.
+</ParamField>
+
+### Options
+
+<ParamField path="-c, --compact" type="boolean" default="false">
+  Compact output (single-line JSON).
+</ParamField>
+
+### Examples
+
+```bash
+# View active vault
+glam-cli vault view
+
+# View specific vault
+glam-cli vault view 8x7Y9kLmAbCdEfGhIjKlMnOpQrStUvWxYz123456789
+
+# Compact output
+glam-cli vault view --compact
+```
+
+### Example Output
+
+```json
+{
+  "idStr": "8x7Y9kLmAbCdEfGhIjKlMnOpQrStUvWxYz123456789",
+  "vault": "5hN23pQrAbCdEfGhIjKlMnOpQrStUvWxYz987654321",
+  "productType": "tokenizedVault",
+  "nameStr": "My Fund",
+  "launchDate": "2026-02-15",
+  "owner": "ownr...pubkey",
+  "baseAssetMint": "EPjF...USDC"
+}
+```
+
+---
+
+## vault create
+
+Create a new GLAM vault from a JSON configuration file.
+
+```bash
+glam-cli vault create <path> [options]
+```
+
+### Arguments
+
+<ParamField path="path" type="string" required>
+  Path to the JSON file containing vault configuration. Must contain 'state' or 'mint' property.
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Create vault with confirmation
+glam-cli vault create vault-config.json
+
+# Create vault without confirmation
+glam-cli vault create vault-config.json --yes
+```
+
+### Example Output
+
+```
+State PDA: 8x7Y9kLmAbCdEfGhIjKlMnOpQrStUvWxYz123456789
+Vault PDA: 5hN23pQrAbCdEfGhIjKlMnOpQrStUvWxYz987654321
+Mint PDA: 3mN45pQrAbCdEfGhIjKlMnOpQrStUvWxYz111222333
+Initialized tokenizedVault: tx_signature_here
+```
+
+---
+
+## vault update-owner
+
+Update the owner of a GLAM vault.
+
+```bash
+glam-cli vault update-owner <new-owner> [options]
+```
+
+### Arguments
+
+<ParamField path="new-owner" type="string" required>
+  New owner public key.
+</ParamField>
+
+### Options
+
+<ParamField path="-n, --name" type="string">
+  New portfolio manager name.
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Transfer ownership
+glam-cli vault update-owner 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333
+
+# Transfer ownership with new manager name
+glam-cli vault update-owner 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333 --name "New Manager"
+
+# Skip confirmation
+glam-cli vault update-owner 9zW8xYvAbCdEfGhIjKlMnOpQrStUvWxYz111222333 --yes
+```
+
+### Example Output
+
+```
+Vault ownership transferred: tx_signature_here
+```
+
+---
+
+## vault enable
+
+Enable a GLAM vault.
+
+```bash
+glam-cli vault enable [options]
+```
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Enable vault with confirmation
+glam-cli vault enable
+
+# Enable vault without confirmation
+glam-cli vault enable --yes
+```
+
+### Example Output
+
+```
+GLAM vault My Fund enabled: tx_signature_here
+```
+
+---
+
+## vault disable
+
+Disable a GLAM vault.
+
+```bash
+glam-cli vault disable [options]
+```
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Disable vault with confirmation
+glam-cli vault disable
+
+# Disable vault without confirmation
+glam-cli vault disable --yes
+```
+
+### Example Output
+
+```
+GLAM vault My Fund disabled: tx_signature_here
+```
+
+---
+
+## vault extend
+
+Extend GLAM state account by adding additional bytes.
+
+```bash
+glam-cli vault extend <bytes> [options]
+```
+
+### Arguments
+
+<ParamField path="bytes" type="number" required>
+  Number of bytes to add to the state account.
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Extend state account by 1024 bytes
+glam-cli vault extend 1024
+
+# Extend without confirmation
+glam-cli vault extend 2048 --yes
+```
+
+### Example Output
+
+```
+GLAM state 8x7Y9kLmAbCdEfGhIjKlMnOpQrStUvWxYz123456789 extended: tx_signature_here
+```
+
+---
+
+## vault close
+
+Close a GLAM vault by its state public key.
+
+```bash
+glam-cli vault close [state] [options]
+```
+
+### Arguments
+
+<ParamField path="state" type="string">
+  Vault state public key. If not provided, uses the active vault from config.
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Close active vault
+glam-cli vault close
+
+# Close specific vault
+glam-cli vault close 8x7Y9kLmAbCdEfGhIjKlMnOpQrStUvWxYz123456789
+
+# Close without confirmation
+glam-cli vault close --yes
+```
+
+### Example Output
+
+```
+My Fund closed: tx_signature_here
+```
+
+---
+
+## vault wrap
+
+Wrap SOL into wSOL (wrapped SOL).
+
+```bash
+glam-cli vault wrap <amount> [options]
+```
+
+### Arguments
+
+<ParamField path="amount" type="number" required>
+  Amount of SOL to wrap. Must be greater than 0.
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Wrap 10 SOL
+glam-cli vault wrap 10
+
+# Wrap without confirmation
+glam-cli vault wrap 5.5 --yes
+```
+
+### Example Output
+
+```
+Wrapped 10 SOL: tx_signature_here
+```
+
+---
+
+## vault unwrap
+
+Unwrap all wSOL (wrapped SOL) back to SOL.
+
+```bash
+glam-cli vault unwrap [options]
+```
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Unwrap all wSOL
+glam-cli vault unwrap
+
+# Unwrap without confirmation
+glam-cli vault unwrap --yes
+```
+
+### Example Output
+
+```
+wSOL unwrapped: tx_signature_here
+```
+
+---
+
+## vault close-token-accounts
+
+Close vault token accounts.
+
+```bash
+glam-cli vault close-token-accounts [mints...] [options]
+```
+
+### Arguments
+
+<ParamField path="mints" type="string[]">
+  Mint address(es) of token accounts to close. Can provide multiple mint addresses.
+</ParamField>
+
+### Options
+
+<ParamField path="--empty" type="boolean" default="false">
+  Close all empty (zero-balance) token accounts.
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Close specific token accounts
+glam-cli vault close-token-accounts EPjF...USDC So11...SOL
+
+# Close all empty token accounts
+glam-cli vault close-token-accounts --empty
+
+# Close without confirmation
+glam-cli vault close-token-accounts EPjF...USDC --yes
+```
+
+### Example Output
+
+```
+Closed 2 token account(s): tx_signature_here
+```
+
+---
+
+## vault token-balances
+
+Get token balances for the vault.
+
+```bash
+glam-cli vault token-balances [options]
+```
+
+### Options
+
+<ParamField path="-a, --all" type="boolean" default="false">
+  Show all assets including token accounts with 0 balance.
+</ParamField>
+
+<ParamField path="-j, --json" type="boolean" default="false">
+  Output in JSON format.
+</ParamField>
+
+### Examples
+
+```bash
+# Show non-zero balances
+glam-cli vault token-balances
+
+# Show all balances including zero
+glam-cli vault token-balances --all
+
+# Output as JSON
+glam-cli vault token-balances --json
+```
+
+### Example Output
+
+```
+Token   Mint                                          Amount          Value (USD)
+SOL     N/A                                           25.123456789    2512.345678
+USDC    EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v  1000.000000     1000.000000
+wSOL    So11111111111111111111111111111111111111112   5.500000000     550.123456
+```
+
+---
+
+## vault list-assets
+
+List vault asset allowlist and corresponding token accounts.
+
+```bash
+glam-cli vault list-assets
+```
+
+### Examples
+
+```bash
+glam-cli vault list-assets
+```
+
+### Example Output
+
+```json
+[
+  {
+    "assetMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "decimals": 6,
+    "tokenAccount": "7xK8...tokenAcc",
+    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+  },
+  {
+    "assetMint": "So11111111111111111111111111111111111111112",
+    "decimals": 9,
+    "tokenAccount": "9mP2...tokenAcc",
+    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+  }
+]
+```
+
+---
+
+## vault allowlist-asset
+
+Add an asset to the vault allowlist.
+
+```bash
+glam-cli vault allowlist-asset <asset> [options]
+```
+
+### Arguments
+
+<ParamField path="asset" type="string" required>
+  Asset mint public key to add to the allowlist.
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Add USDC to allowlist
+glam-cli vault allowlist-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Add without confirmation
+glam-cli vault allowlist-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v --yes
+```
+
+### Example Output
+
+```
+EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v added to allowlist: tx_signature_here
+```
+
+---
+
+## vault remove-asset
+
+Remove an asset from the vault allowlist.
+
+```bash
+glam-cli vault remove-asset <asset> [options]
+```
+
+### Arguments
+
+<ParamField path="asset" type="string" required>
+  Asset mint public key to remove from the allowlist. Cannot remove the base asset.
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt.
+</ParamField>
+
+### Examples
+
+```bash
+# Remove asset from allowlist
+glam-cli vault remove-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Remove without confirmation
+glam-cli vault remove-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v --yes
+```
+
+### Example Output
+
+```
+EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v removed from allowlist: tx_signature_here
+```
+
+---
+
+## vault holdings
+
+Get all vault holdings with pricing information.
+
+```bash
+glam-cli vault holdings
+```
+
+### Examples
+
+```bash
+glam-cli vault holdings
+```
+
+### Example Output
+
+```json
+{
+  "totalValue": 4062.469134,
+  "holdings": [
+    {
+      "asset": "SOL",
+      "amount": 25.123456789,
+      "value": 2512.345678,
+      "price": 100.0
+    },
+    {
+      "asset": "USDC",
+      "amount": 1000.000000,
+      "value": 1000.000000,
+      "price": 1.0
+    },
+    {
+      "asset": "wSOL",
+      "amount": 5.500000000,
+      "value": 550.123456,
+      "price": 100.0226
+    }
+  ]
+}
+```

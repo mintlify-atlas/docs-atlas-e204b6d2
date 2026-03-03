@@ -1,0 +1,192 @@
+---
+title: Drift Vaults Commands
+description: Deposit and manage positions in Drift vaults
+---
+
+## view-policy
+
+View the Drift vaults policy.
+
+```bash
+glam drift-vaults view-policy
+```
+
+**Example output:**
+
+```
+Drift vaults allowlist:
+[0] 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W
+[1] J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn
+```
+
+## allowlist-vault
+
+Add a Drift vault to the allowlist.
+
+```bash
+glam drift-vaults allowlist-vault <vault> [options]
+```
+
+<ParamField path="vault" type="string" required>
+  Drift vault public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Add vault to allowlist
+glam drift-vaults allowlist-vault 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W
+
+# Add without confirmation
+glam drift-vaults allowlist-vault 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W -y
+```
+
+## remove-vault
+
+Remove a Drift vault from the allowlist.
+
+```bash
+glam drift-vaults remove-vault <vault> [options]
+```
+
+<ParamField path="vault" type="string" required>
+  Drift vault public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Remove vault from allowlist
+glam drift-vaults remove-vault 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W
+
+# Remove without confirmation
+glam drift-vaults remove-vault 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W -y
+```
+
+## list-depositors
+
+List Drift vault depositors owned by the GLAM vault.
+
+```bash
+glam drift-vaults list-depositors
+```
+
+**Example output:**
+
+```
+[0] Depositor: 7xK..., vault: JLP Vault, shares: 100.5, deposit asset: USDC
+[1] Depositor: 9yM..., vault: SOL Vault, shares: 50.25, deposit asset: SOL
+```
+
+## deposit
+
+Deposit to a Drift vault.
+
+```bash
+glam drift-vaults deposit <vault> <amount> [options]
+```
+
+<ParamField path="vault" type="string" required>
+  Drift vault public key
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount to deposit
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Deposit 100 USDC to vault
+glam drift-vaults deposit 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 100
+
+# Deposit without confirmation
+glam drift-vaults deposit 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 100 -y
+```
+
+## request-withdraw
+
+Request to withdraw from a Drift vault.
+
+```bash
+glam drift-vaults request-withdraw <vault> <amount> [options]
+```
+
+<ParamField path="vault" type="string" required>
+  Drift vault public key
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount of vault shares to withdraw
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Request withdrawal of 50 shares
+glam drift-vaults request-withdraw 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 50
+
+# Request without confirmation
+glam drift-vaults request-withdraw 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 50 -y
+```
+
+## cancel-withdraw
+
+Cancel a pending withdrawal request.
+
+```bash
+glam drift-vaults cancel-withdraw <vault> [options]
+```
+
+<ParamField path="vault" type="string" required>
+  Drift vault public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Cancel withdrawal request
+glam drift-vaults cancel-withdraw 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W
+
+# Cancel without confirmation
+glam drift-vaults cancel-withdraw 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W -y
+```
+
+## withdraw
+
+Claim a withdrawal after the waiting period.
+
+```bash
+glam drift-vaults withdraw <vault>
+```
+
+<ParamField path="vault" type="string" required>
+  Drift vault public key
+</ParamField>
+
+**Examples:**
+
+```bash
+# Claim withdrawal
+glam drift-vaults withdraw 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W
+```

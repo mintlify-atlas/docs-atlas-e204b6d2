@@ -1,0 +1,191 @@
+---
+title: "Delegate Commands"
+description: "Manage delegate access control and permissions for vault operations"
+---
+
+## Overview
+
+Delegate commands allow fund managers to grant and revoke granular permissions to third-party wallets (delegates) for specific protocol operations. This enables delegation of trading, lending, and other protocol interactions without giving full vault control.
+
+## Commands
+
+### glam delegate list
+
+List all delegates and their permissions for the active vault.
+
+```bash
+glam delegate list
+```
+
+**Output**: Displays each delegate's public key, integration programs, and protocol-specific permissions.
+
+**Example**:
+```bash
+glam delegate list
+# Output:
+# MyVault (ABC123...) has 2 delegates:
+# [0] Delegate1PublicKey...
+#   Integration: IntegrationProgram1...
+#     DriftProtocol: PlaceOrders, CancelOrders
+#     SplToken: Transfer
+# [1] Delegate2PublicKey...
+#   Integration: IntegrationProgram2...
+#     KaminoLend: Deposit, Withdraw
+```
+
+---
+
+### glam delegate grant
+
+Grant specific protocol permissions to a delegate.
+
+```bash
+glam delegate grant <pubkey> --protocol <name> <permissions...> [options]
+```
+
+<ParamField path="pubkey" type="string" required>
+  Public key of the delegate wallet to grant permissions to
+</ParamField>
+
+<ParamField path="--protocol" type="string" required>
+  Protocol name (e.g., DriftProtocol, KaminoLend, SplToken, JupiterSwap)
+</ParamField>
+
+<ParamField path="permissions" type="string[]" required>
+  Space-separated list of permission names for the specified protocol
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Grant trading permissions on Drift Protocol
+glam delegate grant 5XYZ...abc --protocol DriftProtocol PlaceOrders CancelOrders
+
+# Grant token transfer permission with auto-confirm
+glam delegate grant 5XYZ...abc --protocol SplToken Transfer -y
+
+# Grant lending permissions on Kamino
+glam delegate grant 5XYZ...abc --protocol KaminoLend Deposit Withdraw Borrow Repay
+```
+
+---
+
+### glam delegate revoke
+
+Revoke specific protocol permissions from a delegate.
+
+```bash
+glam delegate revoke <pubkey> --protocol <name> <permissions...> [options]
+```
+
+<ParamField path="pubkey" type="string" required>
+  Public key of the delegate to revoke permissions from
+</ParamField>
+
+<ParamField path="--protocol" type="string" required>
+  Protocol name (e.g., DriftProtocol, KaminoLend, SplToken, JupiterSwap)
+</ParamField>
+
+<ParamField path="permissions" type="string[]" required>
+  Space-separated list of permission names to revoke for the specified protocol
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Revoke specific Drift permissions
+glam delegate revoke 5XYZ...abc --protocol DriftProtocol PlaceOrders
+
+# Revoke all specified permissions with auto-confirm
+glam delegate revoke 5XYZ...abc --protocol KaminoLend Deposit Withdraw -y
+
+# Revoke token transfer permission
+glam delegate revoke 5XYZ...abc --protocol SplToken Transfer
+```
+
+---
+
+### glam delegate revoke-all
+
+Completely revoke all permissions from a delegate across all protocols and integrations.
+
+```bash
+glam delegate revoke-all <pubkey> [options]
+```
+
+<ParamField path="pubkey" type="string" required>
+  Public key of the delegate to completely remove access for
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Revoke all delegate access
+glam delegate revoke-all 5XYZ...abc
+
+# Revoke all access with auto-confirm
+glam delegate revoke-all 5XYZ...abc -y
+```
+
+<Note>
+This command performs an emergency access update that disables the delegate entirely. Use this when you need to immediately revoke all permissions rather than removing them protocol-by-protocol.
+</Note>
+
+## Common Workflows
+
+### Setting up a trading delegate
+
+```bash
+# 1. Grant trading permissions on Drift
+glam delegate grant 5XYZ...abc --protocol DriftProtocol PlaceOrders CancelOrders ModifyOrders
+
+# 2. Grant swap permissions on Jupiter
+glam delegate grant 5XYZ...abc --protocol JupiterSwap Swap
+
+# 3. Verify permissions
+glam delegate list
+```
+
+### Rotating delegate access
+
+```bash
+# 1. Revoke old delegate entirely
+glam delegate revoke-all 5OLD...xyz -y
+
+# 2. Grant same permissions to new delegate
+glam delegate grant 5NEW...abc --protocol DriftProtocol PlaceOrders CancelOrders -y
+
+# 3. Confirm changes
+glam delegate list
+```
+
+### Partial permission removal
+
+```bash
+# Keep read permissions, remove write permissions
+glam delegate revoke 5XYZ...abc --protocol DriftProtocol PlaceOrders ModifyOrders
+
+# Delegate can still cancel orders but not place new ones
+```
+
+## Permission Names by Protocol
+
+Common permission names vary by protocol:
+
+- **DriftProtocol**: `PlaceOrders`, `CancelOrders`, `ModifyOrders`
+- **KaminoLend**: `Deposit`, `Withdraw`, `Borrow`, `Repay`
+- **SplToken**: `Transfer`, `Burn`, `Mint`
+- **JupiterSwap**: `Swap`
+
+<Tip>
+Use protocol-specific permission names that match your integration. The CLI validates permission names against the configured protocols.
+</Tip>

@@ -1,0 +1,282 @@
+---
+title: 'Vaults'
+description: 'Understand GLAM vault types, structure, PDAs, and asset management'
+---
+
+## Overview
+
+GLAM vaults are the core building blocks of the GLAM protocol. Each vault is a secure, on-chain account that holds assets and enables various DeFi strategies through protocol integrations.
+
+## Vault Types
+
+GLAM supports three distinct vault types, defined by `StateAccountType` in the SDK:
+
+### Vault
+
+A basic vault type that provides core asset custody and management capabilities without tokenization.
+
+- **Use case**: Direct asset management by a portfolio manager
+- **Access**: Owner and delegate-based permissions
+- **Tokenization**: No share tokens issued
+
+### Tokenized Vault
+
+A vault that issues share tokens representing proportional ownership of the vault's assets.
+
+- **Use case**: Multi-investor funds with liquid shares
+- **Access**: Investors can subscribe/redeem through share tokens
+- **Tokenization**: Issues SPL tokens representing vault shares
+- **Features**: Supports fee structures, lockup periods, and notice/settlement periods
+
+### Single Asset Vault
+
+A specialized tokenized vault focused on a single base asset strategy.
+
+- **Use case**: Yield strategies on a single asset (e.g., staking, lending)
+- **Access**: Same as tokenized vault
+- **Tokenization**: Share tokens backed by single asset type
+
+<Note>
+Vault type is set at creation time and cannot be changed. Choose the appropriate type based on your use case.
+</Note>
+
+## Vault Structure
+
+Each GLAM vault consists of multiple Program Derived Addresses (PDAs) that work together:
+
+### State PDA
+
+The primary account that stores vault configuration and metadata.
+
+```typescript
+type VaultState = {
+  accountType: StateAccountType,
+  name: string,
+  owner: PublicKey,
+  baseAssetMint: PublicKey,
+  assets: PublicKey[],
+  enabled: boolean,
+  portfolioManagerName?: string,
+  integrationAcls: IntegrationAcl[],
+  delegateAcls: DelegateAcl[],
+}
+```
+
+**Key fields:**
+- `accountType` - Vault type (Vault, TokenizedVault, or SingleAssetVault)
+- `name` - Human-readable vault name
+- `owner` - Vault owner with full control
+- `baseAssetMint` - Primary asset for accounting (e.g., USDC)
+- `assets` - Allowlist of permitted asset mints
+- `enabled` - Emergency circuit breaker
+
+### Vault PDA
+
+The actual custody account that holds all vault assets.
+
+```bash
+# Example from vault.ts:234
+State PDA: Ek8r...3kM2
+Vault PDA: 9xTv...7qL1
+```
+
+- **Purpose**: Holds SOL and token accounts for all vault assets
+- **Control**: Managed by GLAM program, no direct user access
+- **Derivation**: Derived from state PDA
+
+### Mint PDA (Tokenized Vaults Only)
+
+For tokenized vaults, a mint PDA is created for the vault's share tokens.
+
+```bash
+# Example from vault.ts:260
+State PDA: Ek8r...3kM2
+Vault PDA: 9xTv...7qL1
+Mint PDA: 4nGf...8pQ3
+```
+
+- **Purpose**: Mints/burns share tokens during subscribe/redeem operations
+- **Supply**: Total supply represents total vault shares outstanding
+- **Control**: Managed by GLAM mint program
+
+<Accordion title="View vault PDAs">
+```bash
+# List all vaults and their PDAs
+glam vault list
+
+# View specific vault details
+glam vault view <state-pubkey>
+```
+
+Output includes:
+- State PDA address
+- Vault PDA address  
+- Mint PDA address (if tokenized)
+- Launch date
+- Vault name and type
+</Accordion>
+
+## Base Asset
+
+Every vault must specify a base asset mint, which serves as the primary accounting unit.
+
+### Purpose
+
+- **NAV Calculation**: All holdings are valued relative to the base asset
+- **Subscriptions**: Investors deposit the base asset to receive shares
+- **Redemptions**: Investors receive the base asset when redeeming shares
+- **Performance Tracking**: Returns are measured in base asset terms
+
+### Common Base Assets
+
+- **USDC**: Most common for dollar-denominated strategies
+- **SOL**: For SOL-native strategies
+- **USDT**: Alternative stablecoin
+- **Other**: Any SPL token can be used
+
+<Warning>
+The base asset cannot be removed from the vault's asset allowlist. It must always remain tradeable within the vault.
+</Warning>
+
+## Asset Allowlist
+
+Vaults maintain an explicit allowlist of permitted assets to control risk.
+
+### Managing Assets
+
+```bash
+# View current allowlist
+glam vault list-assets
+
+# Add asset to allowlist
+glam vault allowlist-asset <mint-pubkey>
+
+# Remove asset from allowlist
+glam vault remove-asset <mint-pubkey>
+```
+
+From vault.ts:530-584, the asset management system:
+- Checks for duplicates before adding
+- Prevents removal of base asset
+- Updates state account with new allowlist
+
+### Asset Metadata
+
+Each allowlisted asset includes:
+
+```json
+{
+  "assetMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+  "decimals": 6,
+  "tokenAccount": "...",
+  "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+}
+```
+
+<Info>
+Token accounts are automatically created for each allowlisted asset when needed. Empty token accounts can be closed to reclaim rent.
+</Info>
+
+## Token Balances
+
+Vaults can hold native SOL and any SPL tokens on the allowlist.
+
+```bash
+# View current balances
+glam vault token-balances
+
+# Include zero-balance accounts
+glam vault token-balances --all
+
+# JSON output
+glam vault token-balances --json
+```
+
+### Balance Display
+
+From vault.ts:422-475, balances include:
+- **Token symbol**: Human-readable name (from Jupiter price API)
+- **Mint address**: On-chain identifier
+- **Amount**: Token quantity in UI units
+- **Value (USD)**: Estimated dollar value
+
+### SOL Wrapping
+
+Vaults can wrap/unwrap SOL to wSOL for DeFi integrations:
+
+```bash
+# Wrap SOL to wSOL
+glam vault wrap <amount>
+
+# Unwrap all wSOL to SOL
+glam vault unwrap
+```
+
+## Vault Lifecycle
+
+### Creation
+
+1. **Define configuration**: Create JSON file with vault parameters
+2. **Initialize on-chain**: Deploy vault state and PDAs
+3. **Configure access**: Set up integrations and delegates
+4. **Fund vault**: Transfer initial assets
+
+```bash
+glam vault create <config.json>
+```
+
+### Operation
+
+1. **Set active vault**: Select vault for CLI operations
+2. **Manage assets**: Add/remove allowlisted assets
+3. **Execute strategies**: Trade, lend, stake through integrations
+4. **Monitor performance**: Track holdings and returns
+
+```bash
+# Set active vault
+glam vault set <state-pubkey>
+
+# View holdings
+glam vault holdings
+```
+
+### Closure
+
+Vaults can be closed to reclaim rent and clean up on-chain accounts.
+
+```bash
+# Close vault (withdraws all assets first)
+glam vault close <state-pubkey>
+```
+
+From vault.ts:288-321:
+- Closes mint PDA if tokenized
+- Closes state account
+- Returns rent to owner
+- Cannot be undone
+
+<Warning>
+Vault closure is permanent. Ensure all assets are withdrawn and all investors have redeemed before closing.
+</Warning>
+
+## Emergency Controls
+
+Vault owners can enable/disable vaults as a circuit breaker.
+
+```bash
+# Disable vault (prevents all operations)
+glam vault disable
+
+# Re-enable vault
+glam vault enable
+```
+
+**When disabled:**
+- All trading and protocol integrations are blocked
+- Delegates cannot execute operations
+- Owner can still update configuration
+- Investors cannot subscribe or redeem (tokenized vaults)
+
+<Info>
+Use the disable feature during security incidents, protocol upgrades, or when investigating suspicious activity.
+</Info>

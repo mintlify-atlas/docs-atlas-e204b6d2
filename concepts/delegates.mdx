@@ -1,0 +1,404 @@
+---
+title: 'Delegates'
+description: 'Learn about the GLAM delegate system, permissions, and access control lists'
+---
+
+## Overview
+
+The GLAM delegate system enables vault owners to grant specific permissions to other addresses, allowing controlled access to vault operations without transferring ownership.
+
+## Delegate System
+
+Delegates are third-party addresses (wallets, programs, or multisigs) that can perform specific actions on behalf of a vault.
+
+### Key Concepts
+
+- **Granular Permissions**: Grant only the specific capabilities needed
+- **Protocol-Scoped**: Permissions apply to specific DeFi protocols
+- **Revocable**: Owner can revoke permissions at any time
+- **Multiple Delegates**: Support for multiple delegates with different permission sets
+
+<Info>
+Delegates never have access to the vault owner's private key or ability to transfer ownership.
+</Info>
+
+## Permission Model
+
+Permissions in GLAM are organized hierarchically:
+
+```
+Delegate Pubkey
+  └── Integration Program
+        └── Protocol
+              └── Permissions (bitmask)
+```
+
+### Integration Programs
+
+Integration programs are GLAM adapters that interface with external DeFi protocols:
+
+- **Protocol Program**: Core GLAM integrations (SPL Token, Jupiter, etc.)
+- **Ext Drift Program**: Drift Protocol integrations
+- **Ext Kamino Program**: Kamino Protocol integrations
+
+### Protocols
+
+Each integration program supports multiple protocols, identified by bitflags:
+
+**Protocol Program (0x...):**
+- `0b0000001` - SplToken
+- `0b0000010` - Transfer  
+- `0b0000100` - JupiterSwap
+- `0b0001000` - Stake (Native staking)
+- `0b0010000` - Marinade
+- `0b0100000` - LST (Liquid staking tokens)
+
+**Ext Drift Program:**
+- `0b01` - DriftProtocol
+
+**Ext Kamino Program:**
+- `0b01` - KaminoLend
+- `0b10` - KaminoVaults  
+- `0b100` - KaminoFarms
+
+<Note>
+Protocol bitflags are combined using bitwise OR to enable multiple protocols within a single integration program.
+</Note>
+
+### Permissions
+
+Each protocol defines specific permissions that can be granted:
+
+**SplToken Protocol:**
+- `Burn` - Burn tokens from vault
+- `Mint` - Mint tokens to vault
+- `Transfer` - Transfer tokens between accounts
+
+**JupiterSwap Protocol:**
+- `Swap` - Execute token swaps
+
+**DriftProtocol:**
+- `Initialize` - Initialize Drift accounts
+- `Deposit` - Deposit collateral
+- `Withdraw` - Withdraw collateral
+- `PlaceOrder` - Place spot/perp orders
+- `CancelOrder` - Cancel orders
+- `ModifyOrder` - Modify existing orders
+
+**KaminoLend:**
+- `Deposit` - Deposit to lending markets
+- `Withdraw` - Withdraw from lending markets
+- `Borrow` - Borrow assets
+- `Repay` - Repay loans
+
+Permissions are stored as bitmasks for efficient on-chain storage and validation.
+
+## Delegate Access Control Lists (ACLs)
+
+The vault state maintains a list of delegate ACLs, each containing:
+
+```typescript
+type DelegateAcl = {
+  pubkey: PublicKey,
+  integrationPermissions: IntegrationPermission[]
+}
+
+type IntegrationPermission = {
+  integrationProgram: PublicKey,
+  protocolPermissions: ProtocolPermission[]
+}
+
+type ProtocolPermission = {
+  protocolBitflag: number,
+  permissionsBitmask: BN
+}
+```
+
+From delegate.ts:63-94, the ACL structure enables:
+- Multiple delegates per vault
+- Multiple integration programs per delegate
+- Multiple protocols per integration program
+- Fine-grained permissions per protocol
+
+## Managing Delegates
+
+### Listing Delegates
+
+View all delegates and their permissions:
+
+```bash
+glam delegate list
+```
+
+Output format (from delegate.ts:63-94):
+```
+Vault Name (State PDA) has 2 delegates:
+[0] 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU
+  Integration: ProtocolProgramId...
+    DriftProtocol: PlaceOrder, CancelOrder, ModifyOrder
+    JupiterSwap: Swap
+  Integration: ExtKaminoProgramId...
+    KaminoLend: Deposit, Withdraw
+[1] 9yPkY8...2fT3
+  Integration: ProtocolProgramId...
+    SplToken: Transfer
+```
+
+### Granting Permissions
+
+Grant specific permissions to a delegate:
+
+```bash
+glam delegate grant <pubkey> \
+  --protocol <protocol-name> \
+  <permission1> <permission2> ...
+```
+
+**Examples:**
+
+```bash
+# Grant swap permissions
+glam delegate grant 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU \
+  --protocol JupiterSwap Swap
+
+# Grant Drift trading permissions  
+glam delegate grant 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU \
+  --protocol DriftProtocol \
+  PlaceOrder CancelOrder ModifyOrder
+
+# Grant Kamino lending permissions
+glam delegate grant 9yPkY8...2fT3 \
+  --protocol KaminoLend \
+  Deposit Withdraw Borrow Repay
+```
+
+From delegate.ts:97-133, the grant process:
+1. Resolves protocol name (case-insensitive, fuzzy matching)
+2. Resolves permission names for the protocol
+3. Parses into integration program, protocol bitflag, and permissions bitmask
+4. Submits on-chain transaction to update ACLs
+
+<Accordion title="Protocol Name Fuzzy Matching">
+The CLI supports fuzzy matching for protocol and permission names:
+
+```bash
+# These are all equivalent:
+glam delegate grant <pubkey> --protocol DriftProtocol ...
+glam delegate grant <pubkey> --protocol driftprotocol ...
+glam delegate grant <pubkey> --protocol drift ...  # Close match suggestion
+```
+
+From utils.ts:446-484, the resolver:
+- Tries exact match first
+- Falls back to case-insensitive match
+- Suggests close matches using Levenshtein distance (≤3)
+- Lists all valid protocol names on error
+</Accordion>
+
+### Revoking Permissions
+
+Revoke specific permissions from a delegate:
+
+```bash
+glam delegate revoke <pubkey> \
+  --protocol <protocol-name> \
+  <permission1> <permission2> ...
+```
+
+**Example:**
+
+```bash
+# Revoke swap permissions
+glam delegate revoke 7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU \
+  --protocol JupiterSwap Swap
+```
+
+From delegate.ts:135-171, revoke follows the same resolution logic as grant but removes permissions from the bitmask.
+
+### Revoking All Access
+
+Completely remove a delegate's access:
+
+```bash
+glam delegate revoke-all <pubkey>
+```
+
+From delegate.ts:173-191, this:
+- Removes the delegate from all integration ACLs
+- Clears all protocol permissions
+- Uses `emergencyAccessUpdate` for immediate effect
+- Cannot be undone (must re-grant permissions)
+
+<Warning>
+Using `revoke-all` immediately blocks the delegate from all vault operations. Use specific `revoke` commands to remove granular permissions while maintaining other access.
+</Warning>
+
+## Permission Validation
+
+When a delegate attempts to execute an operation, GLAM validates:
+
+1. **Delegate exists**: Delegate pubkey is in vault's ACL list
+2. **Integration enabled**: Integration program is enabled for vault (see [Integrations](/concepts/integrations))
+3. **Protocol enabled**: Protocol bitflag is set in integration ACL
+4. **Permission granted**: Specific permission bit is set in permissions bitmask
+
+All four conditions must be true for the operation to succeed.
+
+## Use Cases
+
+### Trading Bot
+
+Grant a trading bot limited swap permissions:
+
+```bash
+# Bot can only swap on Jupiter
+glam delegate grant <bot-pubkey> \
+  --protocol JupiterSwap Swap
+```
+
+The bot can execute trades but cannot:
+- Transfer assets out of vault
+- Change vault configuration
+- Grant permissions to others
+- Access other protocols
+
+### Multi-Manager Fund
+
+Grant different managers different protocol access:
+
+```bash
+# Spot trading manager
+glam delegate grant <manager1-pubkey> \
+  --protocol JupiterSwap Swap
+
+# Derivatives manager  
+glam delegate grant <manager2-pubkey> \
+  --protocol DriftProtocol \
+  PlaceOrder CancelOrder ModifyOrder Deposit Withdraw
+
+# Yield manager
+glam delegate grant <manager3-pubkey> \
+  --protocol KaminoLend \
+  Deposit Withdraw Borrow Repay
+```
+
+Each manager operates independently within their domain.
+
+### Custodian Integration
+
+Grant a custodian service transfer rights:
+
+```bash
+glam delegate grant <custodian-pubkey> \
+  --protocol SplToken Transfer
+```
+
+Custodian can move assets but cannot trade or use DeFi protocols.
+
+### Emergency Operator
+
+Grant emergency permissions to close positions during crisis:
+
+```bash
+# Can cancel orders and withdraw from protocols
+glam delegate grant <emergency-pubkey> \
+  --protocol DriftProtocol CancelOrder Withdraw
+
+glam delegate grant <emergency-pubkey> \
+  --protocol KaminoLend Withdraw Repay
+```
+
+<Info>
+Combine delegates with integration policies (max slippage, market allowlists) to create defense-in-depth security.
+</Info>
+
+## Best Practices
+
+### Principle of Least Privilege
+
+Only grant the minimum permissions required:
+
+```bash
+# ❌ Don't grant all permissions unnecessarily
+glam delegate grant <pubkey> --protocol DriftProtocol \
+  Initialize Deposit Withdraw PlaceOrder CancelOrder ModifyOrder
+
+# ✅ Grant only what's needed
+glam delegate grant <pubkey> --protocol DriftProtocol \
+  PlaceOrder CancelOrder
+```
+
+### Regular Audits
+
+Periodically review delegate access:
+
+```bash
+# Review all delegates
+glam delegate list
+
+# Remove unused delegates
+glam delegate revoke-all <unused-delegate>
+```
+
+### Separation of Concerns
+
+Use different delegates for different functions:
+
+- **Trading delegate**: Swap and order permissions only
+- **Yield delegate**: Lending and staking permissions only  
+- **Custody delegate**: Transfer permissions only
+- **Emergency delegate**: Withdrawal and cancel permissions only
+
+### Time-Limited Access
+
+For temporary access, grant and revoke as needed:
+
+```bash
+# Grant access for specific operation
+glam delegate grant <temp-pubkey> --protocol JupiterSwap Swap
+
+# Execute operations...
+
+# Revoke when complete
+glam delegate revoke-all <temp-pubkey>
+```
+
+## Technical Details
+
+### Bitmask Operations
+
+Permissions use bitwise operations for efficiency:
+
+```typescript
+// Check if permission is granted
+const hasPermission = (bitmask: BN, permission: number) => {
+  return bitmask.and(new BN(permission)).gt(new BN(0));
+}
+
+// Grant permission
+const grantPermission = (bitmask: BN, permission: number) => {
+  return bitmask.or(new BN(permission));
+}
+
+// Revoke permission  
+const revokePermission = (bitmask: BN, permission: number) => {
+  return bitmask.and(new BN(permission).notn(256));
+}
+```
+
+### Integration Program Resolution
+
+From delegate.ts:17-54, the system:
+1. Receives protocol name and permission names
+2. Looks up integration program ID and protocol bitflag
+3. Converts permission names to bitmask
+4. Calls `grantDelegatePermissions` or `revokeDelegatePermissions`
+5. Updates on-chain ACL data
+
+### On-Chain Storage
+
+Delegate ACLs are stored in the vault state account, growing dynamically as delegates are added. Use `vault extend` if the state account needs more space.
+
+<Note>
+Each delegate entry consumes approximately 100-200 bytes depending on the number of integration programs and protocols configured.
+</Note>

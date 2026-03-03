@@ -1,0 +1,71 @@
+---
+title: LST Commands
+description: Stake and unstake SOL with Liquid Staking Token pools
+---
+
+## stake
+
+Stake SOL into a LST pool.
+
+```bash
+glam lst stake <stakepool> <amount> [options]
+```
+
+<ParamField path="stakepool" type="string" required>
+  Stake pool address
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount of SOL to stake
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Stake 10 SOL to stake pool
+glam lst stake CtMyWsrUtAwXWiGr9WjHT5fC3p3fgV8cyGpLTo2LJzG1 10
+
+# Stake without confirmation
+glam lst stake CtMyWsrUtAwXWiGr9WjHT5fC3p3fgV8cyGpLTo2LJzG1 10 -y
+```
+
+## unstake
+
+Unstake LST and receive SOL in a stake account.
+
+```bash
+glam lst unstake <asset> <amount> [options]
+```
+
+<ParamField path="asset" type="string" required>
+  LST mint address
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount of LST to unstake
+</ParamField>
+
+<ParamField path="-d, --deactivate" type="boolean" default="false">
+  Deactivate the stake account
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Unstake 5 LST
+glam lst unstake 7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj 5
+
+# Unstake and deactivate
+glam lst unstake 7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj 5 -d
+
+# Unstake without confirmation
+glam lst unstake 7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj 5 -y
+```

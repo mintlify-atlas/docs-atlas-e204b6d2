@@ -1,0 +1,158 @@
+---
+title: 'Address Lookup Tables (ALT)'
+description: 'Manage address lookup tables for GLAM vaults'
+---
+
+# Address Lookup Table Commands
+
+Address Lookup Tables (ALTs) help reduce transaction size by storing frequently used addresses. These commands manage ALTs for your GLAM vault.
+
+## create
+
+Create a new address lookup table for the connected GLAM vault. This command automatically collects all vault-related addresses and creates an ALT with them.
+
+```bash
+glam alt create [options]
+```
+
+### Options
+
+<ParamField path="-y, --yes" type="flag">
+  Skip confirmation prompt and execute immediately
+</ParamField>
+
+### Behavior
+
+1. Collects all vault-related addresses (state, vault PDA, mint, escrow, request queue, extra metas, protocol programs)
+2. Gets the current finalized slot
+3. Creates the lookup table
+4. Extends the table with collected addresses in batches if needed
+5. Returns multiple transaction signatures if batching is required
+
+### Examples
+
+**Create with confirmation:**
+```bash
+glam alt create
+```
+
+**Create without confirmation:**
+```bash
+glam alt create -y
+```
+
+### Output
+
+```
+Collected 42 addresses for lookup table
+Address lookup table 8XyZqR... created: 5Hs2kP..., 3Dm9vK...
+```
+
+---
+
+## extend
+
+Extend an existing address lookup table with new addresses. This command compares current vault addresses against the ALT and adds any missing ones.
+
+```bash
+glam alt extend <table> [options]
+```
+
+### Arguments
+
+<ParamField path="table" type="string" required>
+  Public key of the address lookup table to extend (base58 encoded)
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="flag">
+  Skip confirmation prompt and execute immediately
+</ParamField>
+
+### Behavior
+
+1. Validates that the specified ALT exists for this vault
+2. Collects current vault addresses
+3. Compares with existing ALT entries
+4. Identifies new addresses not in the table
+5. Extends the ALT with new addresses in batches if needed
+6. Returns early if no new addresses are found
+
+### Examples
+
+**Extend with confirmation:**
+```bash
+glam alt extend 8XyZqR2fK3VNhBJT9x5eWdL4mPnQvR7sJ6kU1cH2gM9N
+```
+
+**Extend without confirmation:**
+```bash
+glam alt extend 8XyZqR2fK3VNhBJT9x5eWdL4mPnQvR7sJ6kU1cH2gM9N --yes
+```
+
+### Output
+
+**When new addresses are found:**
+```
+Found 5 new addresses to add
+Address lookup table 8XyZqR... extended: 2Xt9pL...
+```
+
+**When ALT is up to date:**
+```
+Address lookup table is already up to date.
+```
+
+---
+
+## list
+
+List all address lookup tables created for the connected GLAM vault.
+
+```bash
+glam alt list
+```
+
+### Arguments
+
+None
+
+### Options
+
+None
+
+### Examples
+
+```bash
+glam alt list
+```
+
+### Output
+
+**When ALTs exist:**
+```
+GLAM address lookup tables:
+[0] 8XyZqR2fK3VNhBJT9x5eWdL4mPnQvR7sJ6kU1cH2gM9N
+[1] 3Dm9vK8pL2hW5rN9xC7fT6mE4qJ1bY3aG8uH9sV2kP7M
+```
+
+**When no ALTs exist:**
+```
+No GLAM address lookup table found
+```
+
+---
+
+## Requirements
+
+All ALT commands require:
+- An active vault connection (use `glam connect <vault>` first)
+- The signer must have authority to modify the vault's lookup tables
+
+## Error Handling
+
+Common errors:
+- **GlamClient is not connected to a vault**: Connect to a vault first with `glam connect`
+- **Address lookup table not found**: The specified ALT doesn't exist or isn't associated with this vault
+- **Invalid public key**: The table argument is not a valid base58-encoded public key

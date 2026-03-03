@@ -1,0 +1,89 @@
+---
+title: Marinade Commands
+description: Stake SOL with Marinade Finance
+---
+
+## stake
+
+Stake SOL and receive mSOL.
+
+```bash
+glam marinade stake <amount> [options]
+```
+
+<ParamField path="amount" type="number" required>
+  Amount of SOL to stake
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Stake 10 SOL
+glam marinade stake 10
+
+# Stake without confirmation
+glam marinade stake 10 -y
+```
+
+## stake-native
+
+Stake SOL to Marinade Native.
+
+```bash
+glam marinade stake-native <amount> [options]
+```
+
+<ParamField path="amount" type="number" required>
+  Amount of SOL to stake
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Stake 10 SOL to Marinade Native
+glam marinade stake-native 10
+
+# Stake without confirmation
+glam marinade stake-native 10 -y
+```
+
+## withdraw-stake
+
+Withdraw mSOL into a stake account.
+
+```bash
+glam marinade withdraw-stake <amount> [options]
+```
+
+<ParamField path="amount" type="number" required>
+  Amount of mSOL to withdraw
+</ParamField>
+
+<ParamField path="-d, --deactivate" type="boolean" default="false">
+  Deactivate the stake account
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Withdraw 5 mSOL into stake account
+glam marinade withdraw-stake 5
+
+# Withdraw and deactivate
+glam marinade withdraw-stake 5 -d
+
+# Withdraw without confirmation
+glam marinade withdraw-stake 5 -y
+```

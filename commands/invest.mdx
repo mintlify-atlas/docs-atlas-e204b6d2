@@ -1,0 +1,277 @@
+---
+title: "Investor Commands"
+description: "Subscribe to vaults, redeem shares, and manage investment requests"
+---
+
+## Overview
+
+Investor commands allow users to deposit assets into tokenized vaults (subscribe), withdraw assets (redeem), and manage pending requests. GLAM supports both instant and queued subscription/redemption modes.
+
+## Commands
+
+### glam invest subscribe
+
+Subscribe to a tokenized vault by depositing the vault's base asset to receive share tokens.
+
+```bash
+glam invest subscribe <amount> [state] [options]
+```
+
+<ParamField path="amount" type="number" required>
+  Amount of base asset to deposit (in UI units, e.g., 100 for 100 USDC)
+</ParamField>
+
+<ParamField path="state" type="string">
+  Vault state public key to subscribe to. If omitted, uses the active vault from CLI config.
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+<ParamField path="-q, --queued" type="boolean">
+  Use queued subscription mode instead of instant. Queued subscriptions require a separate claim step after fulfillment.
+</ParamField>
+
+**Examples**:
+```bash
+# Instant subscription to active vault
+glam invest subscribe 1000
+
+# Queued subscription (requires later claim)
+glam invest subscribe 1000 --queued
+
+# Subscribe to specific vault with auto-confirm
+glam invest subscribe 500 5VaultState...xyz -y
+
+# Subscribe with queued mode and skip confirmation
+glam invest subscribe 2500 --queued -y
+```
+
+**Behavior**:
+- Validates minimum subscription amount against vault settings
+- Instant mode: Immediately mints and transfers share tokens
+- Queued mode: Creates a pending request that must be fulfilled by the manager
+- Checks token metadata for display name and symbol
+- Loads price oracles and lookup tables for instant subscriptions
+
+<Note>
+The amount must meet the vault's minimum subscription requirement. Check with `glam info` or the vault manager.
+</Note>
+
+---
+
+### glam invest claim-subscription
+
+Claim share tokens after a queued subscription request has been fulfilled.
+
+```bash
+glam invest claim-subscription
+```
+
+**No parameters**. This command automatically finds and claims the fulfilled subscription for the active wallet.
+
+**Example**:
+```bash
+# After manager fulfills queued subscription
+glam invest claim-subscription
+```
+
+**Behavior**:
+- Only needed for queued subscriptions (instant subscriptions don't require claiming)
+- Loads price oracles and lookup tables
+- Transfers share tokens to your wallet
+- Removes the fulfilled request from the queue
+
+<Tip>
+This command is automatic and doesn't require confirmation. Run it after the vault manager has executed `glam manage fulfill`.
+</Tip>
+
+---
+
+### glam invest redeem
+
+Request to redeem share tokens back to the vault's base asset.
+
+```bash
+glam invest redeem <amount> [options]
+```
+
+<ParamField path="amount" type="number" required>
+  Amount of share tokens to redeem (in UI units)
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Redeem 50 share tokens
+glam invest redeem 50
+
+# Redeem with auto-confirm
+glam invest redeem 100 -y
+```
+
+**Behavior**:
+- Validates minimum redemption amount against vault settings
+- Creates a queued redemption request
+- Request must be fulfilled by the manager before claiming
+- Burns share tokens and queues base asset withdrawal
+
+<Note>
+All redemptions are queued and require a two-step process: (1) request redemption, (2) claim after fulfillment. The amount must meet the vault's minimum redemption requirement.
+</Note>
+
+---
+
+### glam invest claim-redemption
+
+Claim base assets after a redemption request has been fulfilled.
+
+```bash
+glam invest claim-redemption
+```
+
+**No parameters**. This command automatically finds and claims the fulfilled redemption for the active wallet.
+
+**Example**:
+```bash
+# After manager fulfills redemption
+glam invest claim-redemption
+```
+
+**Behavior**:
+- Loads price oracles and lookup tables
+- Transfers base asset tokens to your wallet
+- Removes the fulfilled request from the queue
+- Completes the redemption process
+
+---
+
+### glam invest cancel-request
+
+Cancel a pending queued subscription or redemption request that has not yet been fulfilled.
+
+```bash
+glam invest cancel-request [options]
+```
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Cancel pending request
+glam invest cancel-request
+
+# Cancel with auto-confirm
+glam invest cancel-request -y
+```
+
+**Behavior**:
+- Only works on pending (unfulfilled) requests
+- Returns deposited assets for subscriptions
+- Returns share tokens for redemptions
+- Removes the request from the queue
+
+<Warning>
+You cannot cancel a request after it has been fulfilled. Once fulfilled, you must claim the assets.
+</Warning>
+
+## Investment Workflows
+
+### Instant Subscription Flow
+
+```bash
+# 1. Subscribe instantly
+glam invest subscribe 1000
+
+# Share tokens appear immediately in wallet
+```
+
+### Queued Subscription Flow
+
+```bash
+# 1. Create queued subscription request
+glam invest subscribe 1000 --queued
+
+# 2. Wait for manager to fulfill (they run: glam manage fulfill)
+
+# 3. Claim your share tokens
+glam invest claim-subscription
+```
+
+### Redemption Flow
+
+```bash
+# 1. Request redemption
+glam invest redeem 50
+
+# 2. Wait for manager to fulfill (they run: glam manage fulfill)
+
+# 3. Claim your base assets
+glam invest claim-redemption
+```
+
+### Canceling a Pending Request
+
+```bash
+# 1. Create queued subscription
+glam invest subscribe 1000 --queued
+
+# 2. Change your mind before fulfillment
+glam invest cancel-request
+
+# Assets returned to wallet
+```
+
+## Investment Modes
+
+### Instant Mode
+- Default for subscriptions
+- Immediate share token minting
+- No manager approval needed
+- Requires real-time pricing
+- Best for high-frequency trading vaults
+
+### Queued Mode
+- Used for subscriptions (with `--queued`) and all redemptions
+- Two-step process: request → fulfill → claim
+- Manager controls fulfillment timing
+- Allows batch processing
+- Better for traditional fund structures
+
+## Minimum Amounts
+
+Vaults enforce minimum amounts for subscriptions and redemptions:
+
+```bash
+# Check vault minimums
+glam info
+
+# Example output:
+# Minimum subscription: 100 USDC
+# Minimum redemption: 10 shares
+```
+
+Commands will fail if amounts are below the configured minimums.
+
+## Asset Decimals
+
+The CLI handles decimal conversions automatically:
+
+```bash
+# These are equivalent for a 6-decimal USDC vault:
+glam invest subscribe 1000        # UI: 1000 USDC
+# Internally: 1000000000 (1000 * 10^6)
+
+glam invest subscribe 1000.50     # UI: 1000.50 USDC
+# Internally: 1000500000 (1000.50 * 10^6)
+```
+
+<Tip>
+Always use UI amounts in commands. The CLI automatically converts to the correct on-chain representation based on token decimals.
+</Tip>

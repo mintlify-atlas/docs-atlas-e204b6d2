@@ -1,0 +1,305 @@
+---
+title: Kamino Lending Commands
+description: Lend, borrow, and manage positions on Kamino Finance
+---
+
+## view-policy
+
+View the Kamino lending policy.
+
+```bash
+glam klend view-policy
+```
+
+**Example output:**
+
+```
+Kamino lending markets allowlist:
+[0] 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF
+Kamino lending borrowable assets allowlist:
+[0] EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+```
+
+## allowlist-market
+
+Add a market to the allowlist.
+
+```bash
+glam klend allowlist-market <market> [options]
+```
+
+<ParamField path="market" type="string" required>
+  Kamino lending market public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Add market to allowlist
+glam klend allowlist-market 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF
+
+# Add without confirmation
+glam klend allowlist-market 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF -y
+```
+
+## remove-market
+
+Remove a market from the allowlist.
+
+```bash
+glam klend remove-market <market> [options]
+```
+
+<ParamField path="market" type="string" required>
+  Kamino lending market public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Remove market from allowlist
+glam klend remove-market 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF
+
+# Remove without confirmation
+glam klend remove-market 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF -y
+```
+
+## allowlist-borrowable-asset
+
+Add a borrowable asset to the allowlist.
+
+```bash
+glam klend allowlist-borrowable-asset <asset> [options]
+```
+
+<ParamField path="asset" type="string" required>
+  Borrowable asset public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Add USDC as borrowable
+glam klend allowlist-borrowable-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Add without confirmation
+glam klend allowlist-borrowable-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v -y
+```
+
+## remove-borrowable-asset
+
+Remove a borrowable asset from the allowlist.
+
+```bash
+glam klend remove-borrowable-asset <asset> [options]
+```
+
+<ParamField path="asset" type="string" required>
+  Borrowable asset public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Remove borrowable asset
+glam klend remove-borrowable-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+# Remove without confirmation
+glam klend remove-borrowable-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v -y
+```
+
+## init
+
+Initialize Kamino user metadata.
+
+```bash
+glam klend init
+```
+
+**Examples:**
+
+```bash
+glam klend init
+```
+
+## list
+
+List Kamino deposits and borrows.
+
+```bash
+glam klend list [market]
+```
+
+<ParamField path="market" type="string">
+  Optional: Kamino lending market public key to filter by
+</ParamField>
+
+**Examples:**
+
+```bash
+# List all positions
+glam klend list
+
+# List positions for specific market
+glam klend list 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF
+```
+
+**Example output:**
+
+```
+Obligation: 3xK7...
+ - deposit[0]: 1000.5 EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+ - borrow[0]: 500.25 So11111111111111111111111111111111111111112
+```
+
+## deposit
+
+Deposit to Kamino Lending market.
+
+```bash
+glam klend deposit <market> <asset> <amount> [options]
+```
+
+<ParamField path="market" type="string" required>
+  Kamino lending market public key
+</ParamField>
+
+<ParamField path="asset" type="string" required>
+  Asset public key
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount to deposit
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Deposit 100 USDC
+glam klend deposit 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100
+
+# Deposit without confirmation
+glam klend deposit 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100 -y
+```
+
+## withdraw
+
+Withdraw asset from Kamino Lending market.
+
+```bash
+glam klend withdraw <market> <asset> <amount> [options]
+```
+
+<ParamField path="market" type="string" required>
+  Kamino lending market public key
+</ParamField>
+
+<ParamField path="asset" type="string" required>
+  Asset public key
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount to withdraw
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Withdraw 50 USDC
+glam klend withdraw 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50
+
+# Withdraw without confirmation
+glam klend withdraw 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50 -y
+```
+
+## borrow
+
+Borrow from Kamino Lending market.
+
+```bash
+glam klend borrow <market> <asset> <amount> [options]
+```
+
+<ParamField path="market" type="string" required>
+  Kamino lending market public key
+</ParamField>
+
+<ParamField path="asset" type="string" required>
+  Asset public key
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount to borrow
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Borrow 100 USDC
+glam klend borrow 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100
+
+# Borrow without confirmation
+glam klend borrow 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 100 -y
+```
+
+## repay
+
+Repay loan from Kamino Lending market.
+
+```bash
+glam klend repay <market> <asset> <amount> [options]
+```
+
+<ParamField path="market" type="string" required>
+  Kamino lending market public key
+</ParamField>
+
+<ParamField path="asset" type="string" required>
+  Asset public key
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount to repay
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Repay 50 USDC
+glam klend repay 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50
+
+# Repay without confirmation
+glam klend repay 7u3HeHxYDLhnCoErrtycNokbQYbWGzLs6JSDqGAv5PfF EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v 50 -y
+```

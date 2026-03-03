@@ -1,0 +1,220 @@
+---
+title: "Integration Commands"
+description: "Manage protocol integrations and enable/disable vault access to DeFi protocols"
+---
+
+## Overview
+
+Integration commands control which DeFi protocols your vault can interact with. Each integration represents a program ID and one or more protocols that the vault is allowed to use.
+
+## Commands
+
+### glam integration list
+
+List all enabled integration programs and their associated protocols.
+
+```bash
+glam integration list
+```
+
+**Output**: Displays each integration program ID with its enabled protocols and their bitmask representation.
+
+**Example**:
+```bash
+glam integration list
+# Output:
+# MyVault (ABC123...) has 3 integration programs enabled:
+# [0] IntegrationProgram1..., protocols (0b11): SplToken, JupiterSwap
+# [1] IntegrationProgram2..., protocols (0b101): DriftProtocol, KaminoLend
+# [2] IntegrationProgram3..., protocols (0b1): MarinadeFinance
+```
+
+---
+
+### glam integration enable
+
+Enable one or more protocols by name. Protocols are automatically grouped by their integration program.
+
+```bash
+glam integration enable <protocols...> [options]
+```
+
+<ParamField path="protocols" type="string[]" required>
+  Space-separated list of protocol names to enable (e.g., SplToken, JupiterSwap, DriftProtocol, KaminoLend)
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Enable single protocol
+glam integration enable SplToken
+
+# Enable multiple protocols from same integration
+glam integration enable SplToken JupiterSwap
+
+# Enable protocols across different integrations
+glam integration enable DriftProtocol KaminoLend MarinadeFinance -y
+```
+
+**Behavior**:
+- Protocols are grouped by integration program
+- Single confirmation prompt shows all protocols being enabled
+- Each integration program is processed in sequence
+- Confirmation is only shown for the first integration (subsequent ones auto-confirm)
+
+<Note>
+The Mint integration cannot be enabled through this command. It is handled separately by the system.
+</Note>
+
+---
+
+### glam integration disable
+
+Disable one or more protocols by name. Protocols are automatically grouped by their integration program.
+
+```bash
+glam integration disable <protocols...> [options]
+```
+
+<ParamField path="protocols" type="string[]" required>
+  Space-separated list of protocol names to disable (e.g., SplToken, JupiterSwap, DriftProtocol, KaminoLend)
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Disable single protocol
+glam integration disable JupiterSwap
+
+# Disable multiple protocols with auto-confirm
+glam integration disable DriftProtocol KaminoLend -y
+
+# Disable all trading protocols
+glam integration disable JupiterSwap DriftProtocol
+```
+
+**Behavior**:
+- Protocols are grouped by integration program
+- Single confirmation prompt shows all protocols being disabled
+- Each integration program is processed in sequence
+- Disabling a protocol removes specific permissions while keeping others in the same integration active
+
+---
+
+### glam integration disable-all
+
+Disable all protocols from a specific integration program. This is an emergency operation that removes all protocol access for the given integration.
+
+```bash
+glam integration disable-all <integration_program> [options]
+```
+
+<ParamField path="integration_program" type="string" required>
+  Integration program public key to completely disable
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Disable entire integration program
+glam integration disable-all 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin
+
+# Emergency disable with auto-confirm
+glam integration disable-all 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin -y
+```
+
+<Warning>
+This command uses the emergency access update mechanism and disables ALL protocols from the specified integration program immediately. Use this for security incidents or when you need to quickly revoke all access to an integration.
+</Warning>
+
+<Note>
+The Mint integration program cannot be disabled through this command.
+</Note>
+
+## Common Workflows
+
+### Initial vault setup
+
+```bash
+# Enable core protocols for a new vault
+glam integration enable SplToken JupiterSwap DriftProtocol -y
+
+# Verify enabled integrations
+glam integration list
+```
+
+### Adding new DeFi protocol
+
+```bash
+# Enable Kamino lending
+glam integration enable KaminoLend
+
+# Grant delegate permission to use it
+glam delegate grant 5XYZ...abc --protocol KaminoLend Deposit Withdraw
+```
+
+### Security incident response
+
+```bash
+# Immediately disable compromised integration
+glam integration disable-all 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin -y
+
+# Disable specific high-risk protocols
+glam integration disable JupiterSwap DriftProtocol -y
+
+# Review remaining access
+glam integration list
+glam delegate list
+```
+
+### Selective protocol management
+
+```bash
+# Enable trading but not lending
+glam integration enable JupiterSwap DriftProtocol
+
+# Later, add lending protocols
+glam integration enable KaminoLend MarginfiLend
+
+# Disable trading protocols if needed
+glam integration disable JupiterSwap DriftProtocol
+```
+
+## Supported Protocols
+
+Common protocol names include:
+
+- **SplToken** - SPL Token transfers and operations
+- **JupiterSwap** - Jupiter DEX aggregator swaps
+- **DriftProtocol** - Drift perpetuals and spot trading
+- **KaminoLend** - Kamino lending and borrowing
+- **MarginfiLend** - Marginfi lending protocol
+- **MarinadeFinance** - Marinade liquid staking
+
+<Tip>
+Protocol names are case-sensitive. Use the exact names as they appear in `glam integration list`.
+</Tip>
+
+## Integration vs Delegate Permissions
+
+**Integration**: Controls which protocols the vault CAN use  
+**Delegate**: Controls which specific actions a wallet MAY perform
+
+Both must be configured for a delegate to interact with a protocol:
+
+```bash
+# 1. Enable protocol at vault level
+glam integration enable DriftProtocol
+
+# 2. Grant delegate permission to use it
+glam delegate grant 5XYZ...abc --protocol DriftProtocol PlaceOrders
+```

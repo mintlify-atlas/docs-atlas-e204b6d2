@@ -1,0 +1,340 @@
+---
+title: "Managing Assets"
+description: "Guide for managing vault assets: allowlist, balances, wrapping, and token accounts"
+---
+
+## Overview
+
+GLAM vaults maintain an asset allowlist that controls which tokens can be held in the vault. This guide covers how to manage this allowlist, check token balances, and perform essential asset operations.
+
+## Asset Allowlist
+
+The asset allowlist is a list of token mint addresses that the vault is permitted to hold. Only assets in this allowlist can be traded or deposited.
+
+### Listing Current Assets
+
+View all assets in the vault's allowlist along with their token accounts:
+
+```bash
+glam vault list-assets
+```
+
+**Example output:**
+```json
+[
+  {
+    "assetMint": "So11111111111111111111111111111111111111112",
+    "decimals": 9,
+    "tokenAccount": "5mQ2...3nLw",
+    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+  },
+  {
+    "assetMint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "decimals": 6,
+    "tokenAccount": "7xR3...2kPm",
+    "tokenProgram": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+  }
+]
+```
+
+### Adding Assets to Allowlist
+
+Add a new token to the vault's allowlist:
+
+```bash
+glam vault allowlist-asset <mint-address>
+```
+
+**Example:**
+```bash
+# Add USDC to allowlist
+glam vault allowlist-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+```
+
+**With confirmation skip:**
+```bash
+glam vault allowlist-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v -y
+```
+
+<Warning>
+  Assets cannot be added if they're already in the allowlist. The command will fail with an error message.
+</Warning>
+
+### Removing Assets from Allowlist
+
+Remove a token from the vault's allowlist:
+
+```bash
+glam vault remove-asset <mint-address>
+```
+
+**Example:**
+```bash
+glam vault remove-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+```
+
+<Warning>
+  - You cannot remove the base asset (the primary deposit asset) from the allowlist
+  - The command will fail if the asset is not currently in the allowlist
+</Warning>
+
+## Token Balances
+
+View current token holdings in your vault:
+
+```bash
+glam vault token-balances
+```
+
+**Example output:**
+```
+┌──────────┬────────────────────────────────────────────────┬──────────────┬──────────────┐
+│ Token    │ Mint                                           │ Amount       │ Value (USD)  │
+├──────────┼────────────────────────────────────────────────┼──────────────┼──────────────┤
+│ SOL      │ N/A                                            │ 10.500000000 │ 2100.000000  │
+│ wSOL     │ So11111111111111111111111111111111111111112    │ 5.250000000  │ 1050.000000  │
+│ USDC     │ EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v  │ 1000.00      │ 1000.000000  │
+└──────────┴────────────────────────────────────────────────┴──────────────┴──────────────┘
+```
+
+### Show All Assets
+
+Include token accounts with zero balance:
+
+```bash
+glam vault token-balances --all
+```
+
+### JSON Output
+
+Get balances in JSON format for programmatic use:
+
+```bash
+glam vault token-balances --json
+```
+
+**Output:**
+```json
+[
+  {
+    "token": "SOL",
+    "mint": "N/A",
+    "amount": 10.5,
+    "value": 2100
+  },
+  {
+    "token": "USDC",
+    "mint": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+    "amount": 1000,
+    "value": 1000
+  }
+]
+```
+
+<Note>
+  Token prices are fetched from Jupiter API. USD values may show "NaN" for tokens without price data.
+</Note>
+
+## Wrapping and Unwrapping SOL
+
+SOL needs to be wrapped into wSOL (wrapped SOL) for certain DeFi operations.
+
+### Wrap SOL
+
+Convert SOL to wSOL in the vault:
+
+```bash
+glam vault wrap <amount>
+```
+
+**Example:**
+```bash
+# Wrap 5 SOL
+glam vault wrap 5
+```
+
+**Terminal output:**
+```
+Confirm wrapping 5 SOL? (y/n): y
+Wrapped 5 SOL: 2Tx9...4kPq
+```
+
+<Tip>
+  Wrapping SOL is often required before executing swaps or providing liquidity in DeFi protocols.
+</Tip>
+
+### Unwrap wSOL
+
+Convert all wSOL back to SOL:
+
+```bash
+glam vault unwrap
+```
+
+**Terminal output:**
+```
+Confirm unwrapping all wSOL? (y/n): y
+wSOL unwrapped: 3Yz8...5mNq
+```
+
+<Note>
+  The unwrap command unwraps **all** wSOL in the vault. You cannot specify a partial amount.
+</Note>
+
+## Managing Token Accounts
+
+Token accounts consume rent on Solana. You can close empty token accounts to reclaim rent.
+
+### Close Specific Token Accounts
+
+Close token accounts for specific mints:
+
+```bash
+glam vault close-token-accounts <mint1> <mint2> ...
+```
+
+**Example:**
+```bash
+glam vault close-token-accounts EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+```
+
+### Close All Empty Token Accounts
+
+Automatically close all token accounts with zero balance:
+
+```bash
+glam vault close-token-accounts --empty
+```
+
+**Terminal output:**
+```
+Confirm closing 3 token account(s)? (y/n): y
+Closed 3 token account(s): 4Bx7...6pQr
+```
+
+<Tip>
+  Closing unused token accounts reclaims rent (approximately 0.00203928 SOL per account).
+</Tip>
+
+## Vault Holdings
+
+Get a comprehensive view of all vault holdings including positions in DeFi protocols:
+
+```bash
+glam vault holdings
+```
+
+This command returns detailed information about:
+- Token balances
+- Staked positions
+- Liquidity pool positions
+- Lending/borrowing positions
+- Total vault value
+
+## Common Workflows
+
+### Setting Up a New Trading Vault
+
+<Steps>
+  <Step title="Create vault with base asset">
+    ```bash
+    glam vault create my-vault.json
+    ```
+  </Step>
+
+  <Step title="Add trading assets to allowlist">
+    ```bash
+    glam vault allowlist-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v  # USDC
+    glam vault allowlist-asset Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB  # USDT
+    ```
+  </Step>
+
+  <Step title="Verify allowlist">
+    ```bash
+    glam vault list-assets
+    ```
+  </Step>
+
+  <Step title="Check initial balances">
+    ```bash
+    glam vault token-balances
+    ```
+  </Step>
+</Steps>
+
+### Preparing for DeFi Operations
+
+<Steps>
+  <Step title="Wrap SOL for trading">
+    ```bash
+    glam vault wrap 10
+    ```
+  </Step>
+
+  <Step title="Verify wrapped balance">
+    ```bash
+    glam vault token-balances
+    ```
+  </Step>
+
+  <Step title="Execute DeFi operations">
+    Use integration commands (Jupiter swap, Kamino deposit, etc.)
+  </Step>
+
+  <Step title="Unwrap unused wSOL">
+    ```bash
+    glam vault unwrap
+    ```
+  </Step>
+</Steps>
+
+### Cleanup Unused Token Accounts
+
+<Steps>
+  <Step title="Check current balances">
+    ```bash
+    glam vault token-balances --all
+    ```
+  </Step>
+
+  <Step title="Close empty accounts">
+    ```bash
+    glam vault close-token-accounts --empty -y
+    ```
+  </Step>
+
+  <Step title="Verify accounts closed">
+    ```bash
+    glam vault list-assets
+    ```
+  </Step>
+</Steps>
+
+## Command Reference
+
+| Command | Description | Options |
+|---------|-------------|--------|
+| `list-assets` | List vault asset allowlist | None |
+| `allowlist-asset <mint>` | Add asset to allowlist | `-y` skip confirmation |
+| `remove-asset <mint>` | Remove asset from allowlist | `-y` skip confirmation |
+| `token-balances` | Show token balances | `-a, --all` include zero balances<br/>`-j, --json` JSON output |
+| `wrap <amount>` | Wrap SOL to wSOL | `-y` skip confirmation |
+| `unwrap` | Unwrap all wSOL to SOL | `-y` skip confirmation |
+| `close-token-accounts [mints...]` | Close token accounts | `--empty` close all empty accounts<br/>`-y` skip confirmation |
+| `holdings` | Get all vault holdings | None |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Delegate Permissions" icon="user-shield" href="/guides/delegate-permissions">
+    Grant delegates permission to manage vault assets
+  </Card>
+  
+  <Card title="Jupiter Commands" icon="arrow-right-arrow-left" href="/commands/jupiter">
+    Execute token swaps using Jupiter
+  </Card>
+  
+  <Card title="Kamino Commands" icon="vault" href="/commands/kamino-vaults">
+    Deposit assets into Kamino vaults
+  </Card>
+</CardGroup>

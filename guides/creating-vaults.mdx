@@ -1,0 +1,276 @@
+---
+title: "Creating Vaults"
+description: "Step-by-step guide to creating GLAM vaults using templates and the CLI"
+---
+
+## Overview
+
+GLAM CLI supports three types of vaults, each with its own template and use case:
+
+- **Vault**: Basic vault for managing assets
+- **Tokenized Vault**: Vault with share tokens for investor subscriptions/redemptions
+- **Single Asset Vault**: Specialized vault for managing a single asset type
+
+All vaults are created using the `glam vault create` command with a JSON configuration file.
+
+## Available Templates
+
+GLAM provides starter templates in the `templates/` directory:
+
+<AccordionGroup>
+  <Accordion title="vault.json - Basic Vault">
+    ```json
+    {
+      "state": {
+        "accountType": "vault",
+        "name": "GLAM Vault Devnet",
+        "enabled": true,
+        "baseAssetMint": "So11111111111111111111111111111111111111112",
+        "assets": [
+          "So11111111111111111111111111111111111111112",
+          "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+        ]
+      }
+    }
+    ```
+    Basic vault with asset allowlist. Ideal for portfolio management without tokenization.
+  </Accordion>
+
+  <Accordion title="tokenized.json - Tokenized Vault">
+    ```json
+    {
+      "state": {
+        "accountType": "tokenizedVault",
+        "name": "GLAM SOL",
+        "baseAssetMint": "So11111111111111111111111111111111111111112",
+        "enabled": true
+      },
+      "mint": {
+        "name": "GLAM SOL",
+        "symbol": "gmSOL",
+        "uri": "https://glam.systems",
+        "maxCap": 1000000000000,
+        "minSubscription": 100000000,
+        "minRedemption": 100000000,
+        "lockupPeriod": 0,
+        "feeStructure": {
+          "vault": {
+            "subscriptionFeeBps": 10,
+            "redemptionFeeBps": 10
+          },
+          "manager": {
+            "subscriptionFeeBps": 0,
+            "redemptionFeeBps": 0
+          },
+          "management": {
+            "feeBps": 0
+          },
+          "performance": {
+            "feeBps": 2000,
+            "hurdleRateBps": 500,
+            "hurdleType": "hard"
+          }
+        }
+      }
+    }
+    ```
+    Tokenized vault with share tokens and fee structures for investor subscriptions.
+  </Accordion>
+
+  <Accordion title="single-asset.json - Single Asset Vault">
+    ```json
+    {
+      "state": {
+        "accountType": "singleAssetVault",
+        "name": "Single Asset Vault",
+        "baseAssetMint": "So11111111111111111111111111111111111111112"
+      },
+      "mint": {
+        "name": "Single Asset Vault",
+        "symbol": "SAV",
+        "uri": "https://glam.systems",
+        "lockupPeriod": 0,
+        "feeStructure": {
+          "vault": {
+            "subscriptionFeeBps": 0,
+            "redemptionFeeBps": 0
+          }
+        },
+        "notifyAndSettle": {
+          "model": "continuous",
+          "redeemSettlementPeriod": 604800
+        }
+      }
+    }
+    ```
+    Specialized for managing a single asset type with settlement periods.
+  </Accordion>
+</AccordionGroup>
+
+## Creating Your First Vault
+
+<Steps>
+  <Step title="Copy a template">
+    Choose the appropriate template for your use case and copy it to your working directory:
+
+    ```bash
+    cp templates/vault.json my-vault.json
+    ```
+  </Step>
+
+  <Step title="Customize configuration">
+    Edit the JSON file to customize your vault:
+
+    ```json
+    {
+      "state": {
+        "accountType": "vault",
+        "name": "My Portfolio Vault",
+        "enabled": true,
+        "baseAssetMint": "So11111111111111111111111111111111111111112",
+        "assets": [
+          "So11111111111111111111111111111111111111112"
+        ]
+      }
+    }
+    ```
+
+    <Note>
+      The `baseAssetMint` is the primary deposit asset. Use `So11111111111111111111111111111111111111112` for SOL.
+    </Note>
+  </Step>
+
+  <Step title="Create the vault">
+    Run the create command:
+
+    ```bash
+    glam vault create my-vault.json
+    ```
+
+    The CLI will display a confirmation prompt with vault details.
+  </Step>
+
+  <Step title="Confirm and deploy">
+    Review the details and confirm. The CLI will output:
+
+    ```
+    State PDA: 8x7F...9zKp
+    Vault PDA: 5mQ2...3nLw
+    Initialized vault: 2Tx9...4kPq
+    ```
+
+    <Tip>
+      Save these addresses! The State PDA is used for all subsequent vault operations.
+    </Tip>
+  </Step>
+
+  <Step title="Set as active vault">
+    Set this vault as your active vault for future commands:
+
+    ```bash
+    glam vault set 8x7F...9zKp
+    ```
+  </Step>
+</Steps>
+
+## Skip Confirmation Prompt
+
+Use the `-y` or `--yes` flag to skip the confirmation prompt:
+
+```bash
+glam vault create my-vault.json -y
+```
+
+## Configuration Reference
+
+### State Configuration
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `accountType` | string | Yes | Vault type: `vault`, `tokenizedVault`, or `singleAssetVault` |
+| `name` | string | Yes | Vault name (displayed in listings) |
+| `enabled` | boolean | No | Whether vault is enabled (default: true) |
+| `baseAssetMint` | string | Yes | Primary deposit asset mint address |
+| `assets` | array | No | Asset allowlist (mint addresses) |
+
+### Mint Configuration (Tokenized/Single Asset Only)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Share token name |
+| `symbol` | string | Yes | Share token symbol |
+| `uri` | string | Yes | Metadata URI |
+| `maxCap` | number | No | Maximum total supply |
+| `minSubscription` | number | No | Minimum subscription amount |
+| `minRedemption` | number | No | Minimum redemption amount |
+| `lockupPeriod` | number | No | Lockup period in seconds |
+
+### Fee Structure
+
+Fees are specified in basis points (1 bps = 0.01%):
+
+```json
+"feeStructure": {
+  "vault": {
+    "subscriptionFeeBps": 10,    // 0.10% subscription fee
+    "redemptionFeeBps": 10        // 0.10% redemption fee
+  },
+  "performance": {
+    "feeBps": 2000,               // 20% performance fee
+    "hurdleRateBps": 500,         // 5% hurdle rate
+    "hurdleType": "hard"          // or "soft"
+  }
+}
+```
+
+## Listing Vaults
+
+View all your vaults:
+
+```bash
+# Show your vaults (owned or delegated)
+glam vault list
+
+# Show only vaults you own
+glam vault list --owner-only
+
+# Show all vaults on the network
+glam vault list --all
+
+# Filter by type
+glam vault list --type tokenizedVault
+
+# JSON output
+glam vault list --json
+```
+
+## Viewing Vault Details
+
+Inspect a vault's full configuration:
+
+```bash
+# View active vault
+glam vault view
+
+# View specific vault
+glam vault view <state-pubkey>
+
+# Compact output
+glam vault view --compact
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Managing Assets" icon="coins" href="/guides/managing-assets">
+    Add assets to the allowlist and check token balances
+  </Card>
+  
+  <Card title="Delegate Permissions" icon="user-shield" href="/guides/delegate-permissions">
+    Grant delegates permission to manage your vault
+  </Card>
+  
+  <Card title="Investor Operations" icon="wallet" href="/guides/investor-operations">
+    Enable subscriptions and redemptions for tokenized vaults
+  </Card>
+</CardGroup>

@@ -1,0 +1,434 @@
+---
+title: 'CCTP (Cross-Chain Transfer Protocol)'
+description: 'Bridge USDC across chains using Circle CCTP'
+---
+
+# CCTP Commands
+
+Cross-Chain Transfer Protocol (CCTP) enables secure USDC transfers between Solana and EVM chains. These commands manage CCTP policies and execute bridge transfers.
+
+## view-policy
+
+View the current CCTP policy showing allowed destination addresses by domain.
+
+```bash
+glam cctp view-policy
+```
+
+### Arguments
+
+None
+
+### Options
+
+None
+
+### Examples
+
+```bash
+glam cctp view-policy
+```
+
+### Output
+
+```
+CCTP allowed destinations:
+  0: 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+  1: 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2
+  3: 0x1234567890123456789012345678901234567890
+```
+
+**Domain reference:**
+- 0: Ethereum
+- 1: Avalanche  
+- 2: Optimism
+- 3: Arbitrum
+- 6: Base
+- 7: Polygon PoS
+
+See [CCTP Supported Blockchains](https://developers.circle.com/cctp/cctp-supported-blockchains#cctp-v2-supported-domains) for complete list.
+
+---
+
+## allowlist-destination
+
+Add a destination address to the CCTP allowlist for a specific domain.
+
+```bash
+glam cctp allowlist-destination <domain> <destination_address> [options]
+```
+
+### Arguments
+
+<ParamField path="domain" type="number" required>
+  CCTP domain identifier (e.g., 0 for Ethereum, 3 for Arbitrum)
+</ParamField>
+
+<ParamField path="destination_address" type="string" required>
+  Destination address (EVM address by default, or base58 if --base58 flag is used)
+</ParamField>
+
+### Options
+
+<ParamField path="--base58" type="flag">
+  Treat destination address as base58-encoded Solana address instead of EVM address
+</ParamField>
+
+<ParamField path="-y, --yes" type="flag">
+  Skip confirmation prompt and execute immediately
+</ParamField>
+
+### Examples
+
+**Add Ethereum address with confirmation:**
+```bash
+glam cctp allowlist-destination 0 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+```
+
+**Add Arbitrum address without confirmation:**
+```bash
+glam cctp allowlist-destination 3 0x1234567890123456789012345678901234567890 -y
+```
+
+**Add Solana address (base58):**
+```bash
+glam cctp allowlist-destination 5 8XyZqR2fK3VNhBJT9x5eWdL4mPnQvR7sJ6kU1cH2gM9N --base58
+```
+
+### Output
+
+```
+Destination 0x742d35Cc... (domain 0) added to allowlist: 5Hs2kP3vN8wL...
+```
+
+### Error Cases
+
+- Fails if destination is already in the allowlist
+- Fails if address format is invalid
+
+---
+
+## remove-destination
+
+Remove a destination address from the CCTP allowlist.
+
+```bash
+glam cctp remove-destination <domain> <destination_address> [options]
+```
+
+### Arguments
+
+<ParamField path="domain" type="number" required>
+  CCTP domain identifier
+</ParamField>
+
+<ParamField path="destination_address" type="string" required>
+  Destination address to remove (EVM address by default, or base58 if --base58 flag is used)
+</ParamField>
+
+### Options
+
+<ParamField path="--base58" type="flag">
+  Treat destination address as base58-encoded Solana address instead of EVM address
+</ParamField>
+
+<ParamField path="-y, --yes" type="flag">
+  Skip confirmation prompt and execute immediately
+</ParamField>
+
+### Examples
+
+**Remove Ethereum address:**
+```bash
+glam cctp remove-destination 0 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+```
+
+**Remove without confirmation:**
+```bash
+glam cctp remove-destination 3 0x1234567890123456789012345678901234567890 -y
+```
+
+### Output
+
+```
+Destination 0x742d35Cc... (domain 0) removed from allowlist: 2Xt9pL4mK7wN...
+```
+
+---
+
+## bridge-usdc
+
+Bridge USDC from Solana to an EVM chain. The USDC is burned on Solana and can be minted on the destination chain.
+
+```bash
+glam cctp bridge-usdc <amount> <domain> <destination_address> [options]
+```
+
+### Arguments
+
+<ParamField path="amount" type="number" required>
+  Amount of USDC to bridge (in USDC units, e.g., 100.5)
+</ParamField>
+
+<ParamField path="domain" type="number" required>
+  CCTP domain identifier for destination chain
+</ParamField>
+
+<ParamField path="destination_address" type="string" required>
+  Recipient address on destination chain (EVM address by default)
+</ParamField>
+
+### Options
+
+<ParamField path="-d, --destination-caller" type="string">
+  Address authorized to call receive on destination chain
+</ParamField>
+
+<ParamField path="-m, --max-fee-bps" type="number" default="1">
+  Maximum fee in basis points (e.g., 1 = 0.01%, 100 = 1%)
+</ParamField>
+
+<ParamField path="-b, --base58" type="flag">
+  Treat addresses as base58-encoded instead of EVM addresses
+</ParamField>
+
+<ParamField path="-f, --fast" type="flag">
+  Use fast transfer mode with lower finality threshold (1000 vs 2000)
+</ParamField>
+
+<ParamField path="-y, --yes" type="flag">
+  Skip confirmation prompt and execute immediately
+</ParamField>
+
+### Examples
+
+**Bridge 100 USDC to Ethereum:**
+```bash
+glam cctp bridge-usdc 100 0 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+```
+
+**Bridge with fast mode:**
+```bash
+glam cctp bridge-usdc 1000 3 0x1234567890123456789012345678901234567890 --fast
+```
+
+**Bridge with custom max fee (0.5%):**
+```bash
+glam cctp bridge-usdc 500 1 0xabcdef1234567890abcdef1234567890abcdef12 -m 50
+```
+
+**Bridge with destination caller:**
+```bash
+glam cctp bridge-usdc 250 0 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb \
+  -d 0x9876543210987654321098765432109876543210
+```
+
+**Bridge without confirmation:**
+```bash
+glam cctp bridge-usdc 100 0 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb -y
+```
+
+### Output
+
+```
+USDC burned: 7Qm8nK5pL3wM9fC6rT2xP8bD5jG1aX9cF8uE7sU3kJ2N
+```
+
+### Behavior
+
+1. Validates destination is in allowlist (if policy exists)
+2. Converts amount to base units (6 decimals for USDC)
+3. Calculates max fee based on amount and max-fee-bps
+4. Sets finality threshold (1000 for fast, 2000 for normal)
+5. Burns USDC on Solana
+6. Emits attestation for Circle attestation service
+
+### Finality Thresholds
+
+See [CCTP Finality Thresholds](https://developers.circle.com/cctp/technical-guide#cctp-finality-thresholds):
+- **Normal (2000)**: Higher security, longer wait time
+- **Fast (1000)**: Lower finality requirement, faster but slightly less secure
+
+---
+
+## receive
+
+Receive USDC on Solana from an EVM chain bridge transfer.
+
+```bash
+glam cctp receive <source_domain> [options]
+```
+
+### Arguments
+
+<ParamField path="source_domain" type="number" required>
+  Source domain identifier where USDC was burned
+</ParamField>
+
+### Options
+
+<ParamField path="-t, --txHash" type="string">
+  Transaction hash from source chain (hex string starting with 0x). Either txHash or nonce is required.
+</ParamField>
+
+<ParamField path="-n, --nonce" type="string">
+  Nonce from burn message (hex string starting with 0x). Either txHash or nonce is required.
+</ParamField>
+
+### Examples
+
+**Receive using transaction hash:**
+```bash
+glam cctp receive 0 -t 0xabc123...
+```
+
+**Receive using nonce:**
+```bash
+glam cctp receive 3 -n 0x1234567890abcdef
+```
+
+### Output
+
+```
+Received USDC: 4Km7nJ4pK2wL8fB5qS1xN7aD4jF0aW8cE7tD6rT2kH1M
+```
+
+### Behavior
+
+1. Fetches attestation from Circle's attestation service
+2. Validates the message
+3. Mints USDC to the vault on Solana
+4. Uses CCTP lookup table for transaction optimization
+
+### Requirements
+
+- Either `--txHash` or `--nonce` must be provided
+- The burn transaction must be attested by Circle (may take a few minutes)
+- The message must be addressed to this vault
+
+---
+
+## list
+
+List all CCTP bridge events (incoming and outgoing) for the vault.
+
+```bash
+glam cctp list [options]
+```
+
+### Arguments
+
+None
+
+### Options
+
+<ParamField path="-s, --since-slot" type="number">
+  Fetch events starting from this slot number
+</ParamField>
+
+<ParamField path="-b, --batch-size" type="number">
+  Batch size for RPC requests. Higher values reduce latency but require higher RPC rate limits.
+</ParamField>
+
+<ParamField path="-c, --commitment" type="string" default="confirmed">
+  Commitment level (processed, confirmed, finalized)
+</ParamField>
+
+### Examples
+
+**List all events:**
+```bash
+glam cctp list
+```
+
+**List events since specific slot:**
+```bash
+glam cctp list --since-slot 250000000
+```
+
+**List with custom batch size:**
+```bash
+glam cctp list -b 100
+```
+
+**List with finalized commitment:**
+```bash
+glam cctp list -c finalized
+```
+
+### Output
+
+JSON object containing:
+- `vaultState`: Vault state PDA
+- `vaultPda`: Vault PDA
+- `incoming`: Array of incoming bridge events
+- `outgoing`: Array of outgoing bridge events
+
+```json
+{
+  "vaultState": "8XyZqR2fK3VNhBJT9x5eWdL4mPnQvR7sJ6kU1cH2gM9N",
+  "vaultPda": "3Dm9vK8pL2hW5rN9xC7fT6mE4qJ1bY3aG8uH9sV2kP7M",
+  "incoming": [
+    {
+      "slot": 250123456,
+      "signature": "4Km7nJ4pK2wL8fB5qS1xN7aD4jF0aW8cE7tD6rT2kH1M",
+      "sourceDomain": 0,
+      "amount": "100000000",
+      "nonce": "0x1234567890abcdef"
+    }
+  ],
+  "outgoing": [
+    {
+      "slot": 250123400,
+      "signature": "7Qm8nK5pL3wM9fC6rT2xP8bD5jG1aX9cF8uE7sU3kJ2N",
+      "destinationDomain": 3,
+      "amount": "50000000",
+      "recipient": "0x1234567890123456789012345678901234567890"
+    }
+  ]
+}
+```
+
+---
+
+## CCTP Workflow
+
+### Bridging FROM Solana to EVM:
+
+1. **Set up policy** - Add destination addresses to allowlist
+   ```bash
+   glam cctp allowlist-destination 0 0x742d35Cc...
+   ```
+
+2. **Bridge USDC** - Burn USDC on Solana
+   ```bash
+   glam cctp bridge-usdc 100 0 0x742d35Cc...
+   ```
+
+3. **Wait for attestation** - Circle attestation service processes the burn (usually 2-20 minutes)
+
+4. **Mint on destination** - Use Circle's SDK or UI on destination chain to complete the transfer
+
+### Bridging TO Solana from EVM:
+
+1. **Burn on source chain** - Use CCTP on source EVM chain to burn USDC
+
+2. **Wait for attestation** - Circle processes the attestation
+
+3. **Receive on Solana** - Complete the transfer
+   ```bash
+   glam cctp receive 0 -t 0xabc123...
+   ```
+
+### Monitoring:
+
+Check transfer history:
+```bash
+glam cctp list
+```
+
+## Resources
+
+- [CCTP Supported Blockchains](https://developers.circle.com/cctp/cctp-supported-blockchains#cctp-v2-supported-domains)
+- [CCTP Technical Guide](https://developers.circle.com/cctp/technical-guide)
+- [CCTP Finality Thresholds](https://developers.circle.com/cctp/technical-guide#cctp-finality-thresholds)

@@ -1,0 +1,132 @@
+---
+title: Kamino Vaults Commands
+description: Deposit and withdraw from Kamino strategy vaults
+---
+
+## view-policy
+
+View the Kamino vaults policy.
+
+```bash
+glam kvaults view-policy
+```
+
+**Example output:**
+
+```
+Kamino vaults allowlist:
+[0] 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W
+[1] J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn
+```
+
+## allowlist-vault
+
+Add a vault to the allowlist.
+
+```bash
+glam kvaults allowlist-vault <vault> [options]
+```
+
+<ParamField path="vault" type="string" required>
+  Kamino vault public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Add vault to allowlist
+glam kvaults allowlist-vault 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W
+
+# Add without confirmation
+glam kvaults allowlist-vault 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W -y
+```
+
+## remove-vault
+
+Remove a vault from the allowlist.
+
+```bash
+glam kvaults remove-vault <vault> [options]
+```
+
+<ParamField path="vault" type="string" required>
+  Kamino vault public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Remove vault from allowlist
+glam kvaults remove-vault 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W
+
+# Remove without confirmation
+glam kvaults remove-vault 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W -y
+```
+
+## deposit
+
+Deposit to a Kamino vault.
+
+```bash
+glam kvaults deposit <vault> <amount> [options]
+```
+
+<ParamField path="vault" type="string" required>
+  Kamino vault public key
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount to deposit
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Deposit 100 tokens
+glam kvaults deposit 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 100
+
+# Deposit without confirmation
+glam kvaults deposit 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 100 -y
+```
+
+## withdraw
+
+Withdraw from a Kamino vault.
+
+```bash
+glam kvaults withdraw <vault> <amount> [options]
+```
+
+<ParamField path="vault" type="string" required>
+  Kamino vault public key
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount of vault shares to burn and withdraw
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Withdraw 50 shares
+glam kvaults withdraw 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 50
+
+# Withdraw without confirmation
+glam kvaults withdraw 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 50 -y
+```

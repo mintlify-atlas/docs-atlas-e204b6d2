@@ -1,0 +1,113 @@
+---
+title: Installation
+description: Install GLAM CLI and set up your environment to start managing GLAM vaults on Solana.
+---
+
+## Requirements
+
+<Note>
+  GLAM CLI requires Node.js version **20.20.0** or higher.
+</Note>
+
+Before installing GLAM CLI, ensure you have:
+- Node.js >= 20.20.0
+- A Solana wallet keypair file
+- Access to a Solana RPC endpoint (e.g., Helius, QuickNode, or public RPC)
+
+## Install GLAM CLI
+
+Choose your preferred package manager to install GLAM CLI globally:
+
+<CodeGroup>
+
+```bash npm
+npm install -g @glamsystems/glam-cli
+```
+
+```bash pnpm
+pnpm add -g @glamsystems/glam-cli
+```
+
+```bash yarn
+yarn global add @glamsystems/glam-cli
+```
+
+</CodeGroup>
+
+After installation, verify it's working:
+
+```bash
+glam-cli --version
+```
+
+You should see version `1.0.11` or higher.
+
+## Verify Installation
+
+Test that the CLI is accessible:
+
+```bash
+glam-cli --help
+```
+
+This will display the available commands:
+
+```
+CLI for interacting with the GLAM Protocol
+
+Options:
+  -C, --config <path>     path to config file
+  -S, --skip-simulation   skip simulation (default: false)
+  -V, --version          output the version number
+  -h, --help             display help for command
+
+Commands:
+  env                     Display current environment setup
+  vault                   Create, close, manage vault
+  transfer                Transfer vault assets out
+  delegate                Manage delegates
+  integration             Manage integrations
+  jupiter                 Jupiter protocols
+  kamino-lend             Kamino lending
+  kamino-vaults           Kamino vaults
+  kamino-farms            Kamino farms
+  drift-protocol          Drift protocol
+  drift-vaults            Drift vaults
+  invest                  Tokenized vault investor operations
+  manage                  Tokenized vault manager operations
+  alt                     Manage address lookup tables
+  timelock                Timelock operations
+  cctp                    CCTP operations
+```
+
+## Next Steps
+
+<Card
+  title="Quick Start"
+  icon="rocket"
+  href="/quickstart"
+>
+  Set up your configuration and create your first vault
+</Card>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Node version error">
+    If you see an error about Node.js version, check your version:
+    
+    ```bash
+    node --version
+    ```
+    
+    You need Node.js 20.20.0 or higher. Update Node.js using [nvm](https://github.com/nvm-sh/nvm) or download from [nodejs.org](https://nodejs.org/).
+  </Accordion>
+  
+  <Accordion title="Command not found">
+    If `glam-cli` command is not found after installation:
+    
+    1. Ensure the global npm/pnpm/yarn bin directory is in your PATH
+    2. Try running with npx: `npx @glamsystems/glam-cli --version`
+    3. For npm, check your global install location: `npm config get prefix`
+  </Accordion>
+</AccordionGroup>

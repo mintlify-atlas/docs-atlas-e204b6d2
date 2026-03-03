@@ -1,0 +1,105 @@
+---
+title: Kamino Farms Commands
+description: Stake, harvest rewards, and manage Kamino farms
+---
+
+## list
+
+List Kamino farms the GLAM vault has unclaimed rewards in.
+
+```bash
+glam kfarms list
+```
+
+**Example output:**
+
+```
+vaultFarmUser: 5xK..., reward token: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v, unclaimed: 10.5
+vaultFarmUser: 7yM..., reward token: So11111111111111111111111111111111111111112, unclaimed: 2.3
+```
+
+## harvest
+
+Harvest rewards from Kamino farms.
+
+```bash
+glam kfarms harvest <farm_states...> [options]
+```
+
+<ParamField path="farm_states" type="string[]" required>
+  Space-separated list of vault-owned farm states to harvest rewards from
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Harvest from single farm
+glam kfarms harvest 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W
+
+# Harvest from multiple farms
+glam kfarms harvest 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn -y
+```
+
+## stake
+
+Stake tokens to a delegated farm.
+
+```bash
+glam kfarms stake <farm_state> <amount> [options]
+```
+
+<ParamField path="farm_state" type="string" required>
+  Farm state public key to stake to
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount of farm token to stake
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Stake 100 tokens
+glam kfarms stake 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 100
+
+# Stake without confirmation
+glam kfarms stake 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 100 -y
+```
+
+## unstake
+
+Unstake tokens from a delegated farm.
+
+```bash
+glam kfarms unstake <farm_state> <amount> [options]
+```
+
+<ParamField path="farm_state" type="string" required>
+  Farm state public key to unstake from
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount of farm token to unstake
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Unstake 50 tokens
+glam kfarms unstake 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 50
+
+# Unstake without confirmation
+glam kfarms unstake 8UJgxaiQx5nTrdDgph5FiahMmzduuLTLf5WmsPegYA6W 50 -y
+```

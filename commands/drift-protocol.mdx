@@ -1,0 +1,526 @@
+---
+title: Drift Protocol Commands
+description: Trade perpetuals and spot markets on Drift Protocol
+---
+
+## view-policy
+
+View the current Drift protocol policy.
+
+```bash
+glam drift view-policy
+```
+
+## allowlist-market
+
+Add a market to the allowlist.
+
+```bash
+glam drift allowlist-market <market_type> <market_index> [options]
+```
+
+<ParamField path="market_type" type="string" required>
+  Market type: "spot" or "perp"
+</ParamField>
+
+<ParamField path="market_index" type="number" required>
+  Spot or perp market index
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Allowlist spot market
+glam drift allowlist-market spot 0
+
+# Allowlist perp market
+glam drift allowlist-market perp 1 -y
+```
+
+## remove-market
+
+Remove a market from the allowlist.
+
+```bash
+glam drift remove-market <market_type> <market_index> [options]
+```
+
+<ParamField path="market_type" type="string" required>
+  Market type: "spot" or "perp"
+</ParamField>
+
+<ParamField path="market_index" type="number" required>
+  Spot or perp market index
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Remove spot market
+glam drift remove-market spot 0
+
+# Remove perp market
+glam drift remove-market perp 1 -y
+```
+
+## set-order-price-tolerance
+
+Set max allowed deviation from oracle price for limit orders.
+
+```bash
+glam drift set-order-price-tolerance <tolerance_bps> [options]
+```
+
+<ParamField path="tolerance_bps" type="number" required>
+  Tolerance in basis points (0 to disable, e.g., 500 = 5%)
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Set 5% tolerance
+glam drift set-order-price-tolerance 500
+
+# Disable tolerance check
+glam drift set-order-price-tolerance 0 -y
+```
+
+## allowlist-borrowable-asset
+
+Add a borrowable asset to the allowlist.
+
+```bash
+glam drift allowlist-borrowable-asset <token_mint> [options]
+```
+
+<ParamField path="token_mint" type="string" required>
+  Token mint public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+glam drift allowlist-borrowable-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+```
+
+## remove-borrowable-asset
+
+Remove a borrowable asset from the allowlist.
+
+```bash
+glam drift remove-borrowable-asset <token_mint> [options]
+```
+
+<ParamField path="token_mint" type="string" required>
+  Token mint public key
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+glam drift remove-borrowable-asset EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v -y
+```
+
+## init-user
+
+Initialize a Drift user account (sub-account).
+
+```bash
+glam drift init-user [options]
+```
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+<ParamField path="-p, --pool-id" type="number" default="0">
+  Isolated pool ID
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Initialize default sub-account
+glam drift init-user
+
+# Initialize sub-account 1
+glam drift init-user -s 1 -y
+```
+
+## list-users
+
+List Drift users (sub-accounts).
+
+```bash
+glam drift list-users
+```
+
+**Example output:**
+
+```
+2 Drift users found
+[0]: Main Account (Pool ID: 0)
+[1]: Sub Account 1 (Pool ID: 0)
+```
+
+## list-positions
+
+List Drift positions for a sub-account.
+
+```bash
+glam drift list-positions [options]
+```
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+**Examples:**
+
+```bash
+# List positions for default sub-account
+glam drift list-positions
+
+# List positions for sub-account 1
+glam drift list-positions -s 1
+```
+
+## deposit
+
+Deposit assets to Drift.
+
+```bash
+glam drift deposit <market_index> <amount> [options]
+```
+
+<ParamField path="market_index" type="number" required>
+  Spot market index
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount to deposit
+</ParamField>
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Deposit 100 USDC (market index 0)
+glam drift deposit 0 100
+
+# Deposit to sub-account 1
+glam drift deposit 0 100 -s 1 -y
+```
+
+## withdraw
+
+Withdraw assets from Drift.
+
+```bash
+glam drift withdraw <market_index> <amount> [options]
+```
+
+<ParamField path="market_index" type="number" required>
+  Spot market index
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Amount to withdraw
+</ParamField>
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Withdraw 50 USDC
+glam drift withdraw 0 50
+
+# Withdraw from sub-account 1
+glam drift withdraw 0 50 -s 1 -y
+```
+
+## spot
+
+Place a limit spot order.
+
+```bash
+glam drift spot <direction> <market_index> <amount> <price_limit> [options]
+```
+
+<ParamField path="direction" type="string" required>
+  Order direction: "long" or "short"
+</ParamField>
+
+<ParamField path="market_index" type="number" required>
+  Spot market index
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Order amount
+</ParamField>
+
+<ParamField path="price_limit" type="number" required>
+  Price limit in USD
+</ParamField>
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Place long order for 100 USDC at $1.00
+glam drift spot long 0 100 1.00
+
+# Place short order
+glam drift spot short 0 100 1.00 -y
+```
+
+## perp
+
+Place a limit perpetual order.
+
+```bash
+glam drift perp <direction> <market_index> <amount> <price_limit> [options]
+```
+
+<ParamField path="direction" type="string" required>
+  Order direction: "long" or "short"
+</ParamField>
+
+<ParamField path="market_index" type="number" required>
+  Perpetual market index
+</ParamField>
+
+<ParamField path="amount" type="number" required>
+  Order amount
+</ParamField>
+
+<ParamField path="price_limit" type="number" required>
+  Price limit in USD
+</ParamField>
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Place long perp order
+glam drift perp long 0 1 50000
+
+# Place short perp order
+glam drift perp short 0 1 45000 -y
+```
+
+## list-orders
+
+List open orders.
+
+```bash
+glam drift list-orders [options]
+```
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+**Examples:**
+
+```bash
+# List orders for default sub-account
+glam drift list-orders
+
+# List orders for sub-account 1
+glam drift list-orders -s 1
+```
+
+## cancel
+
+Cancel one or more orders.
+
+```bash
+glam drift cancel <order_ids...> [options]
+```
+
+<ParamField path="order_ids" type="number[]" required>
+  Space-separated list of order IDs
+</ParamField>
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Cancel single order
+glam drift cancel 123
+
+# Cancel multiple orders
+glam drift cancel 123 124 125 -y
+```
+
+## margin
+
+Enable or disable margin trading.
+
+```bash
+glam drift margin <enabled> [options]
+```
+
+<ParamField path="enabled" type="boolean" required>
+  Enable (true) or disable (false) margin trading
+</ParamField>
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Enable margin trading
+glam drift margin true
+
+# Disable margin trading
+glam drift margin false -y
+```
+
+## settle
+
+Settle PnL for a perpetual market.
+
+```bash
+glam drift settle <market_index> [options]
+```
+
+<ParamField path="market_index" type="number" required>
+  Perpetual market index
+</ParamField>
+
+<ParamField path="-s, --sub-account-id" type="number" default="0">
+  Sub-account ID
+</ParamField>
+
+**Examples:**
+
+```bash
+# Settle PnL for perp market 0
+glam drift settle 0
+
+# Settle for sub-account 1
+glam drift settle 0 -s 1
+```
+
+## delete-user
+
+Delete a Drift user (sub-account).
+
+```bash
+glam drift delete-user <sub_account_id> [options]
+```
+
+<ParamField path="sub_account_id" type="number" required>
+  Sub-account ID to delete
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Delete sub-account 1
+glam drift delete-user 1
+
+# Delete without confirmation
+glam drift delete-user 1 -y
+```
+
+## update-user-pool-id
+
+Update a Drift user's pool ID.
+
+```bash
+glam drift update-user-pool-id <sub_account_id> <pool_id> [options]
+```
+
+<ParamField path="sub_account_id" type="number" required>
+  Sub-account ID
+</ParamField>
+
+<ParamField path="pool_id" type="number" required>
+  New isolated pool ID
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Update sub-account 1 to pool 2
+glam drift update-user-pool-id 1 2
+
+# Update without confirmation
+glam drift update-user-pool-id 1 2 -y
+```

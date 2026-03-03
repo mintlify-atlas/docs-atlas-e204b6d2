@@ -1,0 +1,78 @@
+---
+title: Native Staking Commands
+description: Manage native Solana stake accounts
+---
+
+## list
+
+List all stake accounts owned by the vault.
+
+```bash
+glam stake list
+```
+
+**Example output:**
+
+```
+Account                                          Lamports        State
+5xK7jL2...                                       10000000000     active
+7yM9nP3...                                       5000000000      inactive
+```
+
+## deactivate
+
+Deactivate one or more stake accounts.
+
+```bash
+glam stake deactivate <accounts...> [options]
+```
+
+<ParamField path="accounts" type="string[]" required>
+  Space-separated list of stake account public keys to deactivate
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Deactivate single account
+glam stake deactivate 5xK7jL2qP9wY8mZ3nH6tR1vC4sB8dE9fG1hI2jK3lM4
+
+# Deactivate multiple accounts
+glam stake deactivate 5xK7jL2qP9wY8mZ3nH6tR1vC4sB8dE9fG1hI2jK3lM4 7yM9nP3qR4wZ5mA6oI8uT2wD5tF7gH9jK1lM3nO5pQ6
+
+# Deactivate without confirmation
+glam stake deactivate 5xK7jL2qP9wY8mZ3nH6tR1vC4sB8dE9fG1hI2jK3lM4 -y
+```
+
+## withdraw
+
+Withdraw from one or more stake accounts.
+
+```bash
+glam stake withdraw <accounts...> [options]
+```
+
+<ParamField path="accounts" type="string[]" required>
+  Space-separated list of stake account public keys to withdraw from
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean" default="false">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples:**
+
+```bash
+# Withdraw from single account
+glam stake withdraw 5xK7jL2qP9wY8mZ3nH6tR1vC4sB8dE9fG1hI2jK3lM4
+
+# Withdraw from multiple accounts
+glam stake withdraw 5xK7jL2qP9wY8mZ3nH6tR1vC4sB8dE9fG1hI2jK3lM4 7yM9nP3qR4wZ5mA6oI8uT2wD5tF7gH9jK1lM3nO5pQ6
+
+# Withdraw without confirmation
+glam stake withdraw 5xK7jL2qP9wY8mZ3nH6tR1vC4sB8dE9fG1hI2jK3lM4 -y
+```

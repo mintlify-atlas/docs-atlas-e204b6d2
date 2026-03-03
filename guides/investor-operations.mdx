@@ -1,0 +1,471 @@
+---
+title: "Investor Operations"
+description: "Guide for subscribe and redeem operations in tokenized vaults"
+---
+
+## Overview
+
+Tokenized vaults allow investors to deposit assets and receive share tokens representing their ownership. This guide covers subscription (deposit) and redemption (withdrawal) operations for tokenized vaults.
+
+<Note>
+  These operations only apply to **tokenized vaults** and **single asset vaults**. Basic vaults do not support investor subscriptions.
+</Note>
+
+## Subscription Modes
+
+GLAM supports two subscription modes:
+
+1. **Instant Subscription**: Immediate share token issuance based on current vault price
+2. **Queued Subscription**: Subscription request that settles at a specific time
+
+The mode depends on the vault's `notifyAndSettle` configuration.
+
+## Subscribing to a Vault
+
+### Instant Subscription
+
+Deposit assets and immediately receive share tokens:
+
+```bash
+glam invest subscribe <amount> [state]
+```
+
+**Parameters:**
+- `amount` - Amount of base asset to deposit (e.g., SOL, USDC)
+- `state` - (Optional) Vault state pubkey. Omit to use active vault.
+
+**Examples:**
+
+<CodeGroup>
+```bash Subscribe to Active Vault
+# Deposit 10 SOL to active vault
+glam invest subscribe 10
+```
+
+```bash Subscribe to Specific Vault
+# Deposit 100 USDC to specific vault
+glam invest subscribe 100 8x7F...9zKp
+```
+
+```bash Skip Confirmation
+# Instant subscription without prompt
+glam invest subscribe 10 -y
+```
+</CodeGroup>
+
+**Terminal output:**
+```
+Confirm instant subscription with 10 SOL (Wrapped SOL)? (y/n): y
+5mQ2...3nLw instant subscription: 2Tx9...4kPq
+```
+
+### Queued Subscription
+
+Request a subscription that settles at a future time:
+
+```bash
+glam invest subscribe <amount> [state] --queued
+```
+
+**Example:**
+```bash
+# Queue subscription for 10 SOL
+glam invest subscribe 10 --queued
+```
+
+**Terminal output:**
+```
+Confirm queued subscription with 10 SOL (Wrapped SOL)? (y/n): y
+5mQ2...3nLw queued subscription: 3Yz8...5mNq
+```
+
+<Note>
+  Queued subscriptions require a second step to claim share tokens after the settlement period.
+</Note>
+
+### Claiming Subscription
+
+After the settlement period, claim your share tokens:
+
+```bash
+glam invest claim-subscription
+```
+
+**Terminal output:**
+```
+5mQ2...3nLw claimed shares: 4Bx7...6pQr
+```
+
+<Tip>
+  The claim operation is automatic (no confirmation prompt). It will fail if the settlement period hasn't passed.
+</Tip>
+
+## Minimum Subscription
+
+Vaults can enforce minimum subscription amounts. If you try to subscribe below the minimum:
+
+```bash
+glam invest subscribe 0.01
+```
+
+**Error:**
+```
+Amount must be at least 0.1 SOL
+```
+
+Check the vault configuration to see minimum requirements:
+
+```bash
+glam vault view
+```
+
+Look for `minSubscription` in the output.
+
+## Redeeming from a Vault
+
+### Request Redemption
+
+Request to redeem share tokens for base assets:
+
+```bash
+glam invest redeem <amount>
+```
+
+**Parameters:**
+- `amount` - Amount of share tokens to redeem
+
+**Examples:**
+
+<CodeGroup>
+```bash Redeem Shares
+# Redeem 5 share tokens
+glam invest redeem 5
+```
+
+```bash Skip Confirmation
+# Redeem without prompt
+glam invest redeem 5 -y
+```
+</CodeGroup>
+
+**Terminal output:**
+```
+Confirm queued redemption of 5 shares? (y/n): y
+5mQ2...3nLw requested to redeem: 5Lx9...7rTp
+```
+
+<Warning>
+  All redemptions are **queued** and require a settlement period before claiming assets.
+</Warning>
+
+### Claiming Redemption
+
+After the settlement period, claim your base assets:
+
+```bash
+glam invest claim-redemption
+```
+
+**Terminal output:**
+```
+5mQ2...3nLw claimed tokens: 6Nz2...8vQs
+```
+
+<Note>
+  The settlement period is defined in the vault's `notifyAndSettle` configuration. It can range from 0 seconds (instant) to several days.
+</Note>
+
+## Minimum Redemption
+
+Vaults can enforce minimum redemption amounts:
+
+```bash
+glam invest redeem 0.001
+```
+
+**Error:**
+```
+Amount must be at least 0.01 shares
+```
+
+## Canceling Requests
+
+Cancel a pending subscription or redemption before it's fulfilled:
+
+```bash
+glam invest cancel-request
+```
+
+**Terminal output:**
+```
+Confirm canceling queued subscription or redemption? (y/n): y
+5mQ2...3nLw cancelled queued request: 7Py3...9wRt
+```
+
+<Warning>
+  You can only cancel requests that haven't been settled yet. Once claimed, requests cannot be canceled.
+</Warning>
+
+## Fee Structure
+
+Tokenized vaults may charge fees on subscriptions and redemptions:
+
+```json
+"feeStructure": {
+  "vault": {
+    "subscriptionFeeBps": 10,    // 0.10% fee on deposits
+    "redemptionFeeBps": 10        // 0.10% fee on withdrawals
+  },
+  "manager": {
+    "subscriptionFeeBps": 0,
+    "redemptionFeeBps": 0
+  },
+  "management": {
+    "feeBps": 0                   // Annual management fee
+  },
+  "performance": {
+    "feeBps": 2000,               // 20% performance fee
+    "hurdleRateBps": 500,         // 5% hurdle rate
+    "hurdleType": "hard"
+  }
+}
+```
+
+**Fee calculation:**
+- Subscription fee: Deducted from deposit amount
+- Redemption fee: Deducted from withdrawal amount
+- Management fee: Accrued over time
+- Performance fee: Charged on gains above hurdle rate
+
+## Complete Investor Workflows
+
+### First-Time Investment
+
+<Steps>
+  <Step title="Find vault to invest in">
+    ```bash
+    glam vault list --all --type tokenizedVault
+    ```
+  </Step>
+
+  <Step title="View vault details">
+    ```bash
+    glam vault view 8x7F...9zKp
+    ```
+    Check fees, minimums, and settlement periods.
+  </Step>
+
+  <Step title="Subscribe to vault">
+    ```bash
+    glam invest subscribe 10 8x7F...9zKp
+    ```
+  </Step>
+
+  <Step title="Wait for settlement (if queued)">
+    For queued subscriptions, wait for the settlement period to pass.
+  </Step>
+
+  <Step title="Claim shares (if queued)">
+    ```bash
+    glam invest claim-subscription
+    ```
+  </Step>
+
+  <Step title="Verify share balance">
+    Check your wallet for share tokens using a Solana wallet viewer.
+  </Step>
+</Steps>
+
+### Exiting an Investment
+
+<Steps>
+  <Step title="Set active vault">
+    ```bash
+    glam vault set 8x7F...9zKp
+    ```
+  </Step>
+
+  <Step title="Request redemption">
+    ```bash
+    glam invest redeem 5
+    ```
+  </Step>
+
+  <Step title="Wait for settlement period">
+    Redemptions always require waiting for the settlement period.
+  </Step>
+
+  <Step title="Claim base assets">
+    ```bash
+    glam invest claim-redemption
+    ```
+  </Step>
+
+  <Step title="Verify asset balance">
+    ```bash
+    solana balance
+    ```
+  </Step>
+</Steps>
+
+### Managing Multiple Requests
+
+<Steps>
+  <Step title="Submit first request">
+    ```bash
+    glam invest subscribe 10 --queued
+    ```
+  </Step>
+
+  <Step title="Wait for settlement">
+    Cannot submit another request until the first is claimed or canceled.
+  </Step>
+
+  <Step title="Claim or cancel">
+    ```bash
+    # Claim after settlement
+    glam invest claim-subscription
+    
+    # Or cancel before settlement
+    glam invest cancel-request
+    ```
+  </Step>
+
+  <Step title="Submit next request">
+    Only after the previous request is resolved.
+  </Step>
+</Steps>
+
+<Warning>
+  You can only have **one pending request** (subscription or redemption) per vault at a time.
+</Warning>
+
+## Notify and Settle Models
+
+Vaults use different settlement models:
+
+### Continuous Model
+
+Immediate subscription/redemption with minimal settlement period:
+
+```json
+"notifyAndSettle": {
+  "model": "continuous",
+  "subscribeSettlementPeriod": 0,     // Instant
+  "redeemSettlementPeriod": 0,        // Instant
+  "timeUnit": "slot"
+}
+```
+
+### Notice Period Model
+
+Requires advance notice before subscription/redemption:
+
+```json
+"notifyAndSettle": {
+  "model": "continuous",
+  "subscribeNoticePeriod": 86400,     // 1 day notice
+  "subscribeSettlementPeriod": 0,
+  "redeemNoticePeriod": 259200,       // 3 day notice
+  "redeemSettlementPeriod": 604800,   // 7 day settlement
+  "timeUnit": "second"
+}
+```
+
+### Understanding Time Units
+
+- `slot` - Solana slot (approximately 400ms)
+- `second` - Real-world seconds
+
+**Example:** 604800 seconds = 7 days
+
+## Subscription vs Redemption Settings
+
+Vaults can have different settings for subscriptions and redemptions:
+
+| Setting | Subscription | Redemption |
+|---------|-------------|------------|
+| Notice Period | Time before subscription is accepted | Time before redemption starts |
+| Settlement Period | Time until shares are issued | Time until assets are returned |
+| Cancellation Window | Time window to cancel subscription | Time window to cancel redemption |
+| Fee | `subscriptionFeeBps` | `redemptionFeeBps` |
+| Minimum | `minSubscription` | `minRedemption` |
+
+## Lockup Periods
+
+Some vaults enforce lockup periods:
+
+```json
+"lockupPeriod": 2592000  // 30 days in seconds
+```
+
+You cannot redeem shares until the lockup period has passed after subscription.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Subscription fails with 'amount too small'">
+    **Solution:** Check the vault's minimum subscription:
+    ```bash
+    glam vault view | grep minSubscription
+    ```
+    Increase your subscription amount to meet the minimum.
+  </Accordion>
+
+  <Accordion title="Cannot claim subscription">
+    **Possible causes:**
+    - Settlement period hasn't passed yet
+    - No pending subscription to claim
+    - Request was already claimed
+
+    **Solution:** Wait for the full settlement period and verify you have a pending request.
+  </Accordion>
+
+  <Accordion title="Redemption fails">
+    **Possible causes:**
+    - Insufficient share token balance
+    - Below minimum redemption amount
+    - Lockup period not expired
+
+    **Solution:** 
+    ```bash
+    # Check your share balance
+    spl-token accounts
+    
+    # Verify vault minimums
+    glam vault view
+    ```
+  </Accordion>
+
+  <Accordion title="Cannot cancel request">
+    **Issue:** Cancellation fails or request already settled
+
+    **Solution:** Requests can only be canceled during the cancellation window before settlement. After settlement, claim instead of canceling.
+  </Accordion>
+</AccordionGroup>
+
+## Command Reference
+
+| Command | Description | Options |
+|---------|-------------|--------|
+| `invest subscribe <amount> [state]` | Subscribe to tokenized vault | `-y` skip confirmation<br/>`-q, --queued` queued mode |
+| `invest claim-subscription` | Claim shares after queued subscription | None |
+| `invest redeem <amount>` | Request redemption of share tokens | `-y` skip confirmation |
+| `invest claim-redemption` | Claim base assets after redemption | None |
+| `invest cancel-request` | Cancel pending subscription/redemption | `-y` skip confirmation |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Creating Vaults" icon="plus" href="/guides/creating-vaults">
+    Learn how to create your own tokenized vault
+  </Card>
+  
+  <Card title="Managing Assets" icon="coins" href="/guides/managing-assets">
+    Manage vault assets and balances
+  </Card>
+  
+  <Card title="Configuration Guide" icon="gear" href="/configuration">
+    Configure your GLAM CLI environment
+  </Card>
+</CardGroup>

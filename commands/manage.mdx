@@ -1,0 +1,478 @@
+---
+title: "Manager Commands"
+description: "Vault management operations including pricing, fulfillment, fees, and investor settings"
+---
+
+## Overview
+
+Manager commands are used by fund managers to operate tokenized vaults: update pricing, fulfill investor requests, claim fees, configure subscription/redemption settings, and manage the investor queue.
+
+## Commands
+
+### glam manage price
+
+Update vault asset prices using configured price oracles.
+
+```bash
+glam manage price
+```
+
+**No parameters**. This command automatically prices all vault assets using the configured oracle feeds.
+
+**Example**:
+```bash
+glam manage price
+# Output: Vault priced: 5Tx...abc
+```
+
+**Behavior**:
+- Loads price oracle instructions for all vault assets
+- Loads GLAM and protocol lookup tables
+- Submits versioned transaction with price updates
+- No confirmation prompt (auto-executes)
+
+<Tip>
+Run this command regularly to keep vault NAV current. Price updates are required before instant subscriptions and fulfillments.
+</Tip>
+
+---
+
+### glam manage fulfill
+
+Fulfill all pending queued subscription and redemption requests.
+
+```bash
+glam manage fulfill
+```
+
+**No parameters**. Processes all pending requests in the queue.
+
+**Example**:
+```bash
+glam manage fulfill
+# Output: Fulfillment triggered: 5Tx...xyz
+```
+
+**Behavior**:
+- Updates vault prices before fulfillment
+- Processes all pending subscription requests (mints shares)
+- Processes all pending redemption requests (prepares base asset withdrawals)
+- Users must claim their assets after fulfillment
+- Simulates transaction before sending
+- No confirmation prompt (auto-executes)
+
+<Note>
+After fulfillment, investors must run `glam invest claim-subscription` or `glam invest claim-redemption` to receive their assets.
+</Note>
+
+---
+
+### glam manage claim-fees
+
+Claim accumulated management and performance fees from the vault.
+
+```bash
+glam manage claim-fees
+```
+
+**No parameters**. Claims all available fees to the manager wallet.
+
+**Example**:
+```bash
+glam manage claim-fees
+# Output: Fees claimed: 5Tx...def
+```
+
+**Behavior**:
+- Transfers accumulated fee tokens to manager
+- Includes management fees and performance fees
+- No confirmation prompt (auto-executes)
+
+---
+
+### glam manage update-min-subscription
+
+Update the minimum subscription amount required for investors.
+
+```bash
+glam manage update-min-subscription <amount> [options]
+```
+
+<ParamField path="amount" type="number" required>
+  New minimum subscription amount in base asset units (e.g., 100 for 100 USDC)
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Set minimum subscription to 1000 USDC
+glam manage update-min-subscription 1000
+
+# Update with auto-confirm
+glam manage update-min-subscription 500 -y
+```
+
+**Behavior**:
+- Converts UI amount to on-chain representation
+- Updates vault configuration
+- Affects all future subscription requests
+- Does not affect existing pending requests
+
+---
+
+### glam manage update-min-redemption
+
+Update the minimum redemption amount required for investors.
+
+```bash
+glam manage update-min-redemption <amount> [options]
+```
+
+<ParamField path="amount" type="number" required>
+  New minimum redemption amount in share token units
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Set minimum redemption to 10 shares
+glam manage update-min-redemption 10
+
+# Update with auto-confirm
+glam manage update-min-redemption 25 -y
+```
+
+**Behavior**:
+- Converts UI amount to on-chain representation
+- Updates vault configuration
+- Affects all future redemption requests
+- Does not affect existing pending requests
+
+---
+
+### glam manage pause
+
+Pause subscription or redemption operations.
+
+```bash
+glam manage pause <action> [options]
+```
+
+<ParamField path="action" type="string" required>
+  Action to pause: `subscription` or `redemption`
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Pause new subscriptions
+glam manage pause subscription
+
+# Pause redemptions with auto-confirm
+glam manage pause redemption -y
+```
+
+**Behavior**:
+- Prevents new requests of the specified type
+- Does not affect existing pending requests
+- Can be reversed with `unpause` command
+
+<Warning>
+Pausing subscriptions prevents new investor deposits. Pausing redemptions prevents investors from withdrawing. Use this for maintenance or emergency situations.
+</Warning>
+
+---
+
+### glam manage unpause
+
+Unpause subscription or redemption operations.
+
+```bash
+glam manage unpause <action> [options]
+```
+
+<ParamField path="action" type="string" required>
+  Action to unpause: `subscription` or `redemption`
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Unpause subscriptions
+glam manage unpause subscription
+
+# Unpause redemptions with auto-confirm
+glam manage unpause redemption -y
+```
+
+**Behavior**:
+- Resumes processing of the specified request type
+- Investors can immediately create new requests
+
+---
+
+### glam manage list-requests
+
+List all pending investor requests in the queue.
+
+```bash
+glam manage list-requests [options]
+```
+
+<ParamField path="-j, --json" type="boolean">
+  Output in JSON format instead of table
+</ParamField>
+
+**Examples**:
+```bash
+# List requests in table format
+glam manage list-requests
+
+# Output as JSON
+glam manage list-requests --json
+```
+
+**Example output** (table):
+```
+User                                      Type         Incoming    Outgoing    Status                Created (timestamp)
+5Investor1...xyz                          subscription 1000        0           pending               2024-03-15T10:30:00Z
+5Investor2...abc                          redemption   0           50          fulfilled (claimable) 2024-03-15T09:00:00Z
+```
+
+**Example output** (JSON):
+```json
+[
+  {
+    "user": "5Investor1...xyz",
+    "type": "subscription",
+    "incoming": 1000,
+    "outgoing": 0,
+    "status": "pending",
+    "created": 1710497400,
+    "timeUnit": "timestamp"
+  },
+  {
+    "user": "5Investor2...abc",
+    "type": "redemption",
+    "incoming": 0,
+    "outgoing": 50,
+    "status": "fulfilled (claimable)",
+    "created": 1710492000,
+    "timeUnit": "timestamp"
+  }
+]
+```
+
+**Behavior**:
+- Shows all pending and fulfilled-but-unclaimed requests
+- Displays incoming (deposits) and outgoing (shares/withdrawals) amounts
+- Status indicates if request needs fulfillment or claiming
+- Time is shown as slot or timestamp depending on vault configuration
+
+<Tip>
+Use this command before running `glam manage fulfill` to see which investor requests will be processed.
+</Tip>
+
+---
+
+### glam manage cancel-for-user
+
+Cancel a pending request on behalf of a user (manager override).
+
+```bash
+glam manage cancel-for-user <pubkey> [options]
+```
+
+<ParamField path="pubkey" type="string" required>
+  Public key of the user whose request should be canceled
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Cancel user's pending request
+glam manage cancel-for-user 5User...xyz
+
+# Cancel with auto-confirm
+glam manage cancel-for-user 5User...xyz -y
+```
+
+**Behavior**:
+- Cancels pending subscription or redemption request
+- Returns assets to user
+- Removes request from queue
+- Only works on pending (unfulfilled) requests
+
+<Warning>
+Use this carefully as it overrides user intent. Best used for policy violations or emergency situations.
+</Warning>
+
+---
+
+### glam manage claim-for-user
+
+Claim a fulfilled request on behalf of a user (manager override).
+
+```bash
+glam manage claim-for-user <pubkey> [options]
+```
+
+<ParamField path="pubkey" type="string" required>
+  Public key of the user whose fulfilled request should be claimed
+</ParamField>
+
+<ParamField path="-y, --yes" type="boolean">
+  Skip confirmation prompt
+</ParamField>
+
+**Examples**:
+```bash
+# Claim for user who hasn't claimed yet
+glam manage claim-for-user 5User...xyz
+
+# Claim with auto-confirm
+glam manage claim-for-user 5User...xyz -y
+```
+
+**Behavior**:
+- Transfers shares (subscription) or base assets (redemption) to user
+- Removes fulfilled request from queue
+- Completes the investment/redemption process
+- Only works on fulfilled requests
+
+<Tip>
+Use this to help users who may not understand the claim step or to batch-process claims for multiple users.
+</Tip>
+
+## Management Workflows
+
+### Daily vault operations
+
+```bash
+# 1. Update prices
+glam manage price
+
+# 2. Check pending requests
+glam manage list-requests
+
+# 3. Fulfill all requests
+glam manage fulfill
+
+# 4. Claim management fees
+glam manage claim-fees
+```
+
+### Processing investor requests
+
+```bash
+# 1. Review queue
+glam manage list-requests
+
+# 2. Price vault
+glam manage price
+
+# 3. Fulfill all
+glam manage fulfill
+
+# 4. Investors claim their assets
+# (or manager claims for them with claim-for-user)
+```
+
+### Updating investor limits
+
+```bash
+# Set minimum investment to 1000 USDC
+glam manage update-min-subscription 1000
+
+# Set minimum redemption to 5 shares
+glam manage update-min-redemption 5
+
+# Verify changes
+glam info
+```
+
+### Emergency pause
+
+```bash
+# Pause both subscriptions and redemptions
+glam manage pause subscription -y
+glam manage pause redemption -y
+
+# Review current state
+glam manage list-requests
+glam info
+
+# Resume when ready
+glam manage unpause subscription -y
+glam manage unpause redemption -y
+```
+
+### Handling problematic requests
+
+```bash
+# List all requests
+glam manage list-requests
+
+# Cancel specific user's request
+glam manage cancel-for-user 5User...xyz
+
+# Or claim on their behalf if fulfilled
+glam manage claim-for-user 5User...xyz
+```
+
+## Request Queue Management
+
+### Request Lifecycle
+
+1. **Pending**: User created request, waiting for manager fulfillment
+2. **Fulfilled**: Manager executed `fulfill`, user can now claim
+3. **Claimed**: User (or manager) executed claim, request completed
+
+### Time Units
+
+Requests track creation time in either:
+- **Slot**: Solana slot number (high precision)
+- **Timestamp**: Unix timestamp (human readable)
+
+The vault configuration determines which is used.
+
+### Incoming vs Outgoing
+
+- **Subscription incoming**: Base asset deposited
+- **Subscription outgoing**: Share tokens to mint (0 until fulfilled)
+- **Redemption incoming**: Share tokens burned
+- **Redemption outgoing**: Base asset to withdraw (0 until fulfilled)
+
+## Fee Collection
+
+Fees accumulate from:
+- **Management fees**: Time-based percentage of AUM
+- **Performance fees**: Percentage of profits above high-water mark
+
+Run `glam manage claim-fees` regularly to collect:
+
+```bash
+# Monthly fee claim
+glam manage claim-fees
+```
+
+Fees are paid in the vault's share token.
+
+<Tip>
+Schedule regular price updates and fulfillments (e.g., daily) to provide the best investor experience.
+</Tip>

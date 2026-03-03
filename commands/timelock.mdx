@@ -1,0 +1,242 @@
+---
+title: 'Timelock'
+description: 'Manage timelock security for vault state changes'
+---
+
+# Timelock Commands
+
+Timelock provides a security mechanism that delays critical vault state changes. Changes are staged and must wait for the timelock period to expire before they can be applied.
+
+## view
+
+View the current timelock configuration and any pending state updates.
+
+```bash
+glam timelock view
+```
+
+### Arguments
+
+None
+
+### Options
+
+None
+
+### Output
+
+Displays:
+- Current timelock duration in seconds
+- Remaining time until timelock expires (if active)
+- Detailed breakdown of pending state updates including:
+  - Integration ACL changes (added, removed, modified integrations with protocol names)
+  - Delegate ACL changes (added, removed, modified delegates with permissions)
+  - Asset list changes
+  - Borrowable asset changes
+  - Timelock duration changes
+
+### Examples
+
+```bash
+glam timelock view
+```
+
+**Output with active timelock:**
+```
+Timelock: 86400 seconds, remaining: 43200s (720m 0s)
+
+Pending state updates:
+  integrationAcls:
+    Added integrations:
+      [+] 5ZqV3kT2... (Jupiter, Raydium)
+    Modified integrations:
+      [~] 8XyZqR2f...
+          Enabling: Orca
+          Disabling: Meteora
+  delegateAcls:
+    Added delegates:
+      [+] 3Dm9vK8p...
+          Expires: 2026-04-01T00:00:00.000Z
+          Permissions:
+            Jupiter: Swap, LimitOrder
+  assets:
+    [+] EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+```
+
+**Output with no pending changes:**
+```
+Timelock: 86400 seconds
+
+No pending state updates.
+```
+
+---
+
+## set
+
+Set the timelock duration for the vault. This change itself is subject to the current timelock.
+
+```bash
+glam timelock set <duration> [options]
+```
+
+### Arguments
+
+<ParamField path="duration" type="number" required>
+  Timelock duration in seconds. Common values:
+  - 3600 (1 hour)
+  - 86400 (24 hours)
+  - 604800 (7 days)
+</ParamField>
+
+### Options
+
+<ParamField path="-y, --yes" type="flag">
+  Skip confirmation prompt and execute immediately
+</ParamField>
+
+### Examples
+
+**Set 24-hour timelock with confirmation:**
+```bash
+glam timelock set 86400
+```
+
+**Set 1-hour timelock without confirmation:**
+```bash
+glam timelock set 3600 -y
+```
+
+**Set 7-day timelock:**
+```bash
+glam timelock set 604800
+```
+
+### Output
+
+```
+Timelock updated: 5Hs2kP3vN8wL9mD7fT2xR6qE4jK1bY9aH8uG7sV3kM2P
+```
+
+---
+
+## apply
+
+Apply pending timelocked changes after the timelock period has expired.
+
+```bash
+glam timelock apply [options]
+```
+
+### Arguments
+
+None
+
+### Options
+
+<ParamField path="-y, --yes" type="flag">
+  Skip confirmation prompt and execute immediately
+</ParamField>
+
+### Behavior
+
+1. Checks that the timelock period has expired
+2. Applies all pending state updates
+3. Clears the pending changes
+4. Resets the timelock expiration
+
+### Examples
+
+**Apply with confirmation:**
+```bash
+glam timelock apply
+```
+
+**Apply without confirmation:**
+```bash
+glam timelock apply -y
+```
+
+### Output
+
+```
+Timelock applied: 2Xt9pL4mK7wN8fD5rT3xQ9bE6jH2aY1cG9uF8sW4kL3M
+```
+
+### Error Cases
+
+- Transaction fails if timelock period has not expired yet
+- Transaction fails if there are no pending changes to apply
+
+---
+
+## cancel
+
+Cancel all pending timelocked changes without applying them.
+
+```bash
+glam timelock cancel [options]
+```
+
+### Arguments
+
+None
+
+### Options
+
+<ParamField path="-y, --yes" type="flag">
+  Skip confirmation prompt and execute immediately
+</ParamField>
+
+### Behavior
+
+1. Clears all pending state updates
+2. Resets the timelock expiration
+3. Does not apply any changes
+
+### Examples
+
+**Cancel with confirmation:**
+```bash
+glam timelock cancel
+```
+
+**Cancel without confirmation:**
+```bash
+glam timelock cancel --yes
+```
+
+### Output
+
+```
+Timelock cancelled: 7Qm8nK5pL3wM9fC6rT2xP8bD5jG1aX9cF8uE7sU3kJ2N
+```
+
+---
+
+## Timelock Workflow
+
+Typical workflow for making protected changes:
+
+1. **Make changes** - Use commands like `glam access add-integration`, `glam access add-delegate`, etc.
+2. **Review pending changes** - Use `glam timelock view` to see what will be applied
+3. **Wait** - Wait for the timelock period to expire (shown in `view` output)
+4. **Apply or cancel**:
+   - Use `glam timelock apply` to commit the changes
+   - Use `glam timelock cancel` to discard them
+
+## Protected State Changes
+
+Timelock protects:
+- Integration ACL modifications
+- Delegate ACL modifications  
+- Asset list changes
+- Borrowable asset changes
+- Timelock duration changes
+
+## Security Considerations
+
+- Longer timelock periods provide more time to detect and prevent malicious changes
+- Use `view` regularly to monitor for unexpected pending changes
+- The timelock duration change itself is subject to the current timelock
+- Only vault managers can set, apply, or cancel timelocks

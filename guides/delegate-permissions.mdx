@@ -1,0 +1,421 @@
+---
+title: "Delegate Permissions"
+description: "Guide for granting and revoking delegate permissions for vault operations"
+---
+
+## Overview
+
+Delegates are addresses that can perform specific operations on your vault. As a vault owner, you can grant granular permissions to delegates for different protocols and operations without transferring vault ownership.
+
+This is useful for:
+- Allowing trading bots to execute swaps
+- Enabling portfolio managers to manage DeFi positions
+- Granting limited access to team members
+- Automating specific vault operations
+
+## Understanding Delegate Permissions
+
+Permissions are organized by:
+1. **Integration Program**: The protocol integration (e.g., Jupiter, Kamino, Drift)
+2. **Protocol**: Specific protocol within the integration
+3. **Permission Names**: Specific operations allowed (e.g., swap, deposit, borrow)
+
+### Permission Scope
+
+Each delegate can have different permissions for different protocols:
+
+```
+Delegate: 5mQ2...3nLw
+  Integration: JupiterProgram
+    Protocol: JupiterSwap
+      Permissions: swap, limitOrder
+  Integration: KaminoProgram  
+    Protocol: KaminoLend
+      Permissions: deposit, withdraw
+```
+
+## Listing Delegates
+
+View all delegates and their current permissions:
+
+```bash
+glam delegate list
+```
+
+**Example output:**
+```
+My Vault (8x7F...9zKp) has 2 delegates:
+[0] 5mQ2...3nLw
+  Integration: JUpiterixyz...
+    JupiterSwap: swap, limitOrder
+  Integration: KAmino123...
+    KaminoLend: deposit, withdraw, borrow, repay
+    
+[1] 7xR3...2kPm  
+  Integration: DRiFt123...
+    DriftProtocol: deposit, withdraw
+```
+
+<Note>
+  Delegates are identified by their public key (wallet address). Make sure you have the correct address before granting permissions.
+</Note>
+
+## Granting Permissions
+
+Grant specific permissions to a delegate for a protocol:
+
+```bash
+glam delegate grant <pubkey> --protocol <protocol-name> <permission1> <permission2> ...
+```
+
+### Examples
+
+<CodeGroup>
+```bash Jupiter Swap
+# Grant swap permissions for Jupiter
+glam delegate grant 5mQ2...3nLw --protocol JupiterSwap swap
+```
+
+```bash Kamino Lending
+# Grant deposit and withdraw for Kamino Lend
+glam delegate grant 5mQ2...3nLw --protocol KaminoLend deposit withdraw
+```
+
+```bash Drift Protocol  
+# Grant trading permissions for Drift
+glam delegate grant 7xR3...2kPm --protocol DriftProtocol deposit withdraw swap
+```
+
+```bash SPL Token
+# Grant token transfer permissions
+glam delegate grant 7xR3...2kPm --protocol SplToken transfer
+```
+</CodeGroup>
+
+**Terminal output:**
+```
+Confirm granting 5mQ2...3nLw "swap" permissions for protocol "JupiterSwap"? (y/n): y
+Granted 5mQ2...3nLw "swap" permissions to JUpiterixyz... for protocol "JupiterSwap": 2Tx9...4kPq
+```
+
+### Skip Confirmation
+
+Use the `-y` flag to skip the confirmation prompt:
+
+```bash
+glam delegate grant 5mQ2...3nLw --protocol JupiterSwap swap -y
+```
+
+### Common Protocol Names
+
+Here are commonly used protocol names:
+
+| Protocol Name | Operations | Description |
+|--------------|------------|-------------|
+| `JupiterSwap` | `swap`, `limitOrder` | Token swaps via Jupiter |
+| `KaminoLend` | `deposit`, `withdraw`, `borrow`, `repay` | Kamino lending operations |
+| `KaminoVaults` | `deposit`, `withdraw` | Kamino liquidity vaults |
+| `DriftProtocol` | `deposit`, `withdraw`, `swap`, `borrow` | Drift perpetuals and trading |
+| `SplToken` | `transfer`, `burn` | SPL token operations |
+| `Marinade` | `stake`, `unstake` | Marinade liquid staking |
+
+<Tip>
+  Protocol and permission names are case-insensitive. `JupiterSwap`, `jupiterswap`, and `JUPITERSWAP` all work.
+</Tip>
+
+## Revoking Permissions
+
+Revoke specific permissions from a delegate:
+
+```bash
+glam delegate revoke <pubkey> --protocol <protocol-name> <permission1> <permission2> ...
+```
+
+### Examples
+
+<CodeGroup>
+```bash Revoke Single Permission
+# Revoke swap permission from Jupiter
+glam delegate revoke 5mQ2...3nLw --protocol JupiterSwap swap
+```
+
+```bash Revoke Multiple Permissions
+# Revoke deposit and withdraw from Kamino
+glam delegate revoke 5mQ2...3nLw --protocol KaminoLend deposit withdraw
+```
+</CodeGroup>
+
+**Terminal output:**
+```
+Confirm revoking 5mQ2...3nLw "swap" permissions for protocol "JupiterSwap"? (y/n): y
+Revoked 5mQ2...3nLw "swap" permissions from JUpiterixyz... for protocol "JupiterSwap": 3Yz8...5mNq
+```
+
+<Warning>
+  Revoking permissions immediately prevents the delegate from performing those operations. This cannot be undone without re-granting.
+</Warning>
+
+## Revoking All Access
+
+Completely remove all permissions for a delegate:
+
+```bash
+glam delegate revoke-all <pubkey>
+```
+
+**Example:**
+```bash
+glam delegate revoke-all 5mQ2...3nLw
+```
+
+**Terminal output:**
+```
+Confirm revoking all 5mQ2...3nLw permissions to the vault? (y/n): y
+Revoked 5mQ2...3nLw access: 4Bx7...6pQr
+```
+
+<Warning>
+  This is an emergency access update that immediately removes the delegate from the vault's ACL (Access Control List). Use this when you need to quickly revoke all access.
+</Warning>
+
+## Permission Management Workflows
+
+### Setting Up a Trading Bot
+
+<Steps>
+  <Step title="Generate bot wallet">
+    Create a dedicated wallet for the trading bot:
+    ```bash
+    solana-keygen new -o trading-bot.json
+    ```
+  </Step>
+
+  <Step title="Grant swap permissions">
+    ```bash
+    glam delegate grant <bot-pubkey> --protocol JupiterSwap swap
+    ```
+  </Step>
+
+  <Step title="Verify permissions">
+    ```bash
+    glam delegate list
+    ```
+  </Step>
+
+  <Step title="Test bot access">
+    Have the bot execute a small test swap to verify permissions.
+  </Step>
+</Steps>
+
+### Onboarding a Portfolio Manager
+
+<Steps>
+  <Step title="Identify required protocols">
+    Determine which protocols the manager needs access to.
+  </Step>
+
+  <Step title="Grant protocol-specific permissions">
+    ```bash
+    # Jupiter for swaps
+    glam delegate grant <manager-pubkey> --protocol JupiterSwap swap
+    
+    # Kamino for yield farming
+    glam delegate grant <manager-pubkey> --protocol KaminoVaults deposit withdraw
+    
+    # Drift for trading
+    glam delegate grant <manager-pubkey> --protocol DriftProtocol deposit withdraw
+    ```
+  </Step>
+
+  <Step title="Document permissions">
+    Keep a record of granted permissions for audit purposes.
+  </Step>
+
+  <Step title="Review regularly">
+    ```bash
+    glam delegate list
+    ```
+  </Step>
+</Steps>
+
+### Emergency Access Revocation
+
+<Steps>
+  <Step title="Identify compromised delegate">
+    Determine which delegate address needs to be revoked.
+  </Step>
+
+  <Step title="Revoke all access immediately">
+    ```bash
+    glam delegate revoke-all <delegate-pubkey> -y
+    ```
+  </Step>
+
+  <Step title="Verify revocation">
+    ```bash
+    glam delegate list
+    ```
+  </Step>
+
+  <Step title="Generate new delegate if needed">
+    Create a new wallet and grant appropriate permissions.
+  </Step>
+</Steps>
+
+### Rotating Delegate Access
+
+<Steps>
+  <Step title="Create new delegate wallet">
+    ```bash
+    solana-keygen new -o new-delegate.json
+    ```
+  </Step>
+
+  <Step title="Grant permissions to new delegate">
+    ```bash
+    glam delegate grant <new-pubkey> --protocol JupiterSwap swap
+    ```
+  </Step>
+
+  <Step title="Verify new delegate works">
+    Test operations with the new delegate.
+  </Step>
+
+  <Step title="Revoke old delegate">
+    ```bash
+    glam delegate revoke-all <old-pubkey> -y
+    ```
+  </Step>
+</Steps>
+
+## Security Best Practices
+
+<AccordionGroup>
+  <Accordion title="Principle of Least Privilege">
+    Only grant the minimum permissions required for each delegate to perform their tasks.
+
+    **Bad:**
+    ```bash
+    # Granting all possible permissions
+    glam delegate grant <bot> --protocol KaminoLend deposit withdraw borrow repay
+    ```
+
+    **Good:**
+    ```bash
+    # Only granting what's needed
+    glam delegate grant <bot> --protocol KaminoLend deposit withdraw
+    ```
+  </Accordion>
+
+  <Accordion title="Use Dedicated Wallets">
+    Create separate wallets for different delegates instead of sharing access:
+
+    ```bash
+    # Trading bot
+    solana-keygen new -o trading-bot.json
+    
+    # Yield optimizer
+    solana-keygen new -o yield-bot.json
+    
+    # Emergency manager
+    solana-keygen new -o emergency-wallet.json
+    ```
+  </Accordion>
+
+  <Accordion title="Regular Permission Audits">
+    Review delegate permissions regularly:
+
+    ```bash
+    # Weekly review
+    glam delegate list
+    ```
+
+    Remove delegates that are no longer needed.
+  </Accordion>
+
+  <Accordion title="Monitor Delegate Activity">
+    Track transactions performed by delegates using Solana explorers or monitoring tools.
+  </Accordion>
+
+  <Accordion title="Emergency Procedures">
+    Have a documented process for emergency access revocation:
+
+    ```bash
+    # Emergency revocation (no confirmation)
+    glam delegate revoke-all <suspicious-delegate> -y
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Permission grant fails">
+    **Error:** `Protocol not found` or `Invalid permission name`
+
+    **Solution:** 
+    - Verify the protocol name is spelled correctly (case-insensitive)
+    - Check available protocols using `glam delegate list`
+    - Ensure you're using the correct permission names for the protocol
+  </Accordion>
+
+  <Accordion title="Delegate cannot perform operation">
+    **Issue:** Delegate receives permission denied error
+
+    **Solution:**
+    ```bash
+    # Verify delegate has required permissions
+    glam delegate list
+    
+    # Grant missing permissions
+    glam delegate grant <pubkey> --protocol <protocol> <missing-permission>
+    ```
+  </Accordion>
+
+  <Accordion title="Cannot revoke permission">
+    **Error:** Permission not found or already revoked
+
+    **Solution:**
+    ```bash
+    # Check current permissions
+    glam delegate list
+    
+    # If delegate has no permissions, use revoke-all to clean up
+    glam delegate revoke-all <pubkey>
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Command Reference
+
+| Command | Description | Required Options |
+|---------|-------------|------------------|
+| `delegate list` | List all delegates and permissions | None |
+| `delegate grant <pubkey>` | Grant permissions to delegate | `--protocol <name>`<br/>`<permissions...>` |
+| `delegate revoke <pubkey>` | Revoke specific permissions | `--protocol <name>`<br/>`<permissions...>` |
+| `delegate revoke-all <pubkey>` | Revoke all delegate access | None |
+
+### Common Options
+
+- `-y, --yes` - Skip confirmation prompt
+- `--protocol <name>` - Protocol name (required for grant/revoke)
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Managing Assets" icon="coins" href="/guides/managing-assets">
+    Learn how to manage vault assets and balances
+  </Card>
+  
+  <Card title="Jupiter Commands" icon="arrow-right-arrow-left" href="/commands/jupiter">
+    Execute swaps with delegate permissions
+  </Card>
+  
+  <Card title="Kamino Commands" icon="vault" href="/commands/kamino-lend">
+    Manage DeFi positions with delegates
+  </Card>
+  
+  <Card title="Drift Commands" icon="chart-line" href="/commands/drift-protocol">
+    Trade perpetuals using delegate accounts
+  </Card>
+</CardGroup>
